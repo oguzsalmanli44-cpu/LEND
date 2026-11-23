@@ -31,6 +31,16 @@ import studio from "./photos/studio.jpg";
 import jbl from "./photos/jbl.jpg";
 import nikon from "./photos/nikon.jpg";
 
+import { AZ } from "./i18n";
+
+// ── Language ──────────────────────────────────────────────────────────────
+// English text is the key; AZ maps it to Azerbaijani. {name} placeholders get filled from vars.
+let LANG = "az";
+const fill = (s, v) => v ? s.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? "") : s;
+const t = (s, v?) => fill(LANG === "az" && AZ[s] != null ? AZ[s] : s, v);
+const daysLabel = n => t(n === 1 ? "{n} day" : "{n} days", { n });
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
 // ── Dates ─────────────────────────────────────────────────────────────────
 const pad = n => String(n).padStart(2, "0");
 const iso = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -38,7 +48,13 @@ const today = () => { const d = new Date(); d.setHours(0,0,0,0); return d; };
 const rel = n => { const d = today(); d.setDate(d.getDate()+n); return iso(d); };
 const parseIso = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); };
 const dayDiff = (a, b) => Math.round((parseIso(b) - parseIso(a)) / 86400000);
-const fmtDate = s => parseIso(s).toLocaleDateString("en-GB", { day:"numeric", month:"short" });
+const AZ_MONTHS = ["yanvar","fevral","mart","aprel","may","iyun","iyul","avqust","sentyabr","oktyabr","noyabr","dekabr"];
+const AZ_MONTHS_SHORT = ["yan","fev","mar","apr","may","iyn","iyl","avq","sen","okt","noy","dek"];
+const fmtDate = s => {
+  const d = parseIso(s);
+  return LANG === "az" ? `${d.getDate()} ${AZ_MONTHS_SHORT[d.getMonth()]}` : d.toLocaleDateString("en-GB", { day:"numeric", month:"short" });
+};
+const fmtMonth = d => LANG === "az" ? `${cap(AZ_MONTHS[d.getMonth()])} ${d.getFullYear()}` : d.toLocaleDateString("en-GB", { month:"long", year:"numeric" });
 const fmtRange = (a, b) => a === b ? fmtDate(a) : `${fmtDate(a)} – ${fmtDate(b)}`;
 
 // ── Pricing ───────────────────────────────────────────────────────────────
@@ -83,7 +99,7 @@ function datesBetween(a, b) {
 }
 
 const DEMO_OWNER_LISTINGS = LISTINGS.slice(0, 3);
-const OWNER_BOOKINGS = [
+const OWNER_BOOKINGS = () => [
   { id:1, item:"Sony A7III + 50mm Lens",  renter:"Sara M.", days:3, total:105, date:fmtRange(rel(3),rel(5)),   status:"active",    avatar:"S" },
   { id:2, item:"Sony A7III + 50mm Lens",  renter:"Ali K.",  days:1, total:35,  date:fmtDate(rel(9)),           status:"pending",   avatar:"A" },
   { id:3, item:"Polaroid Instant Camera", renter:"Lena B.", days:3, total:24,  date:fmtRange(rel(-12),rel(-10)), status:"completed", avatar:"L" },
@@ -103,7 +119,7 @@ function Avatar({ name, size=36, bg="#6C63FF" }) {
 
 // Baku Metro style "M" marker for pickup points.
 function MetroTag({ station, city, light=false }) {
-  if (!station) return <span>📍 {city}</span>;
+  if (!station) return <span>📍 {t(city)}</span>;
   return (
     <span style={{ display:"inline-flex", alignItems:"center", gap:"5px" }}>
       <span className="metro-m">M</span>
@@ -153,7 +169,7 @@ function RangeCalendar({ booked, range, onChange }) {
     cells.push(
       <button key={d} type="button" onClick={()=>pick(d)} disabled={isBooked || isPast}
         className={`cal-day${isEdge?" edge":""}${inRange?" in":""}${isBooked?" booked":""}${d===todayIso?" today":""}`}
-        aria-label={`${d}${isBooked?" (booked)":""}`}>
+        aria-label={isBooked ? `${fmtDate(d)} (${t("Booked")})` : fmtDate(d)}>
         {n}
       </button>
     );
@@ -162,17 +178,17 @@ function RangeCalendar({ booked, range, onChange }) {
   return (
     <div className="cal">
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"10px" }}>
-        <button type="button" className="cal-nav" onClick={()=>setOffset(o=>Math.max(0,o-1))} disabled={offset===0} aria-label="Previous month">‹</button>
-        <div style={{ fontWeight:600, fontSize:"14px" }}>{first.toLocaleDateString("en-GB", { month:"long", year:"numeric" })}</div>
-        <button type="button" className="cal-nav" onClick={()=>setOffset(o=>Math.min(5,o+1))} aria-label="Next month">›</button>
+        <button type="button" className="cal-nav" onClick={()=>setOffset(o=>Math.max(0,o-1))} disabled={offset===0} aria-label={t("Previous month")}>‹</button>
+        <div style={{ fontWeight:600, fontSize:"14px" }}>{fmtMonth(first)}</div>
+        <button type="button" className="cal-nav" onClick={()=>setOffset(o=>Math.min(5,o+1))} aria-label={t("Next month")}>›</button>
       </div>
       <div className="cal-grid">
-        {["Mo","Tu","We","Th","Fr","Sa","Su"].map(w=><div key={w} className="cal-w">{w}</div>)}
+        {[t("Mo"),t("Tu"),t("We"),t("Th"),t("Fr"),t("Sa"),t("Su")].map(w=><div key={w} className="cal-w">{w}</div>)}
         {cells}
       </div>
       <div style={{ display:"flex", gap:"14px", fontSize:"11px", color:"#6B7280", marginTop:"10px" }}>
-        <span><span className="cal-key" style={{ background:"#16A34A" }} /> Your dates</span>
-        <span><span className="cal-key" style={{ background:"#F3F4F6", textDecoration:"line-through" }} /> Booked</span>
+        <span><span className="cal-key" style={{ background:"#16A34A" }} /> {t("Your dates")}</span>
+        <span><span className="cal-key" style={{ background:"#F3F4F6", textDecoration:"line-through" }} /> {t("Booked")}</span>
       </div>
     </div>
   );
@@ -183,7 +199,8 @@ export default function App() {
   const [screen, setScreen]           = useState("home");
   const [cat, setCat]                 = useState("all");
   const [search, setSearch]           = useState("");
-  const [listings, setListings]       = useState(LISTINGS);
+  const [lang, setLang]               = useState(() => { try { return localStorage.getItem("lend-lang") || "az"; } catch { return "az"; } });
+  const [rawListings, setListings]    = useState(LISTINGS);
   const [selected, setSelected]       = useState(null);
   const [range, setRange]             = useState({ start:null, end:null }); // selected rental dates
   const [delivery, setDelivery]       = useState(false);
@@ -207,6 +224,16 @@ export default function App() {
   const [scrolled, setScrolled]       = useState(false);
   const [notif, setNotif]             = useState(null);
   const [mobileMenu, setMobileMenu]   = useState(false);
+
+  LANG = lang; // components below read the current language while rendering
+  useEffect(() => {
+    document.documentElement.lang = lang;
+    try { localStorage.setItem("lend-lang", lang); } catch {}
+  }, [lang]);
+
+  // Listings with their text in the current language.
+  const localize = l => ({ ...l, title:t(l.title), desc:t(l.desc), rules:l.rules.map(r=>t(r)), availability:t(l.availability) });
+  const listings = rawListings.map(localize);
 
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 50);
@@ -259,7 +286,7 @@ export default function App() {
     e?.stopPropagation();
     if (!user) { setShowAuth(true); setAuthMode("signup"); return; }
     setSaved(s => s.includes(id) ? s.filter(x=>x!==id) : [...s, id]);
-    showNotif(saved.includes(id) ? "Removed from saved" : "Saved ❤️");
+    showNotif(saved.includes(id) ? t("Removed from saved") : t("Saved ❤️"));
   };
 
   const handleBook = () => {
@@ -267,7 +294,7 @@ export default function App() {
     if (!user.verified) { go("verify"); return; }
     if (!range.start) { showNotif("Pick your dates first", "error"); return; }
     const end = range.end || range.start;
-    const b = { item:selected, start:range.start, end, days, delivery, ...quote(selected, days, delivery) };
+    const b = { item:rawListings.find(l=>l.id===selected.id) || selected, start:range.start, end, days, delivery, ...quote(selected, days, delivery) };
     setBooking(b);
     setListings(ls => ls.map(l => l.id === selected.id
       ? { ...l, bookedDates:[...l.bookedDates, ...datesBetween(range.start, end)] } : l));
@@ -283,7 +310,7 @@ export default function App() {
     setShowAuth(false);
     setAuthStep(0);
     setAuthForm({ name:"", email:"", password:"" });
-    showNotif(`Welcome back! 👋`);
+    showNotif("Welcome back! 👋");
   };
 
   const handleVerifyDone = () => {
@@ -295,7 +322,7 @@ export default function App() {
 
   const submitListing = () => {
     const newItem = {
-      id: Math.max(...listings.map(l=>l.id)) + 1,
+      id: Math.max(...rawListings.map(l=>l.id)) + 1,
       cat: listForm.cat,
       title: listForm.title,
       owner: user?.name || "You",
@@ -312,7 +339,7 @@ export default function App() {
       desc: listForm.desc,
       rules: listForm.rules ? listForm.rules.split("\n").filter(Boolean) : [],
       insured: false, verified: true,
-      availability: "Available now",
+      availability: t("Available now"),
       bookedDates: [],
     };
     setListings(l => [newItem, ...l]);
@@ -321,22 +348,22 @@ export default function App() {
   };
 
   // Items the signed-in user listed this session, followed by demo listings.
-  const myListings = [...listings.filter(l => user && l.owner === user.name), ...DEMO_OWNER_LISTINGS];
+  const myListings = [...listings.filter(l => user && l.owner === user.name), ...DEMO_OWNER_LISTINGS.map(localize)];
 
   // ── LISTING CARD ──────────────────────────────────────────────────────────
   const renderCard = (item, i) => (
     <div key={item.id} className="card card-hover" onClick={()=>openListing(item)} style={{ animation:`fadeUp 0.45s ease ${Math.min(i,8)*0.04}s both`, overflow:"hidden" }}>
       <ItemPhoto item={item} height="200px">
         <div className="ph-shade" style={{ position:"absolute", inset:0 }} />
-        <button onClick={e=>toggleSave(item.id,e)} aria-label={saved.includes(item.id)?"Remove from saved":"Save"} style={{ position:"absolute", top:"12px", right:"12px", width:"32px", height:"32px", borderRadius:"50%", background:"rgba(255,255,255,0.92)", border:"none", cursor:"pointer", fontSize:"15px", display:"flex", alignItems:"center", justifyContent:"center" }}>
+        <button onClick={e=>toggleSave(item.id,e)} aria-label={saved.includes(item.id)?t("Remove from saved"):t("Save")} style={{ position:"absolute", top:"12px", right:"12px", width:"32px", height:"32px", borderRadius:"50%", background:"rgba(255,255,255,0.92)", border:"none", cursor:"pointer", fontSize:"15px", display:"flex", alignItems:"center", justifyContent:"center" }}>
           {saved.includes(item.id) ? "❤️" : "🤍"}
         </button>
         <div style={{ position:"absolute", top:"12px", left:"12px", display:"flex", gap:"4px" }}>
-          {item.verified && <span className="pill-light">✓ Verified</span>}
+          {item.verified && <span className="pill-light">{t("✓ Verified")}</span>}
         </div>
         <div style={{ position:"absolute", bottom:"10px", left:"12px", right:"12px", display:"flex", justifyContent:"space-between", alignItems:"center", gap:"6px" }}>
-          {item.insured ? <span className="pill-green">🛡 Protected</span> : <span />}
-          {item.retail && <span className="pill-dark">New: ₼{item.retail.toLocaleString("en")}</span>}
+          {item.insured ? <span className="pill-green">{t("🛡 Protected")}</span> : <span />}
+          {item.retail && <span className="pill-dark">{t("New: ₼{n}", { n:item.retail.toLocaleString("en") })}</span>}
         </div>
       </ItemPhoto>
       <div style={{ padding:"14px 16px 16px" }}>
@@ -349,8 +376,8 @@ export default function App() {
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end" }}>
           <div>
             <span style={{ fontFamily:"'Fraunces',serif", fontSize:"22px", fontWeight:700, color:"#111" }}>₼{item.price}</span>
-            <span style={{ fontSize:"12px", color:"#9CA3AF" }}>/day</span>
-            <div style={{ fontSize:"11px", color:"#16A34A", fontWeight:600 }}>₼{Math.round(item.price*7*0.8)} for a week</div>
+            <span style={{ fontSize:"12px", color:"#9CA3AF" }}>{t("/day")}</span>
+            <div style={{ fontSize:"11px", color:"#16A34A", fontWeight:600 }}>{t("₼{n} for a week", { n:Math.round(item.price*7*0.8) })}</div>
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:"4px", fontSize:"12px", color:"#374151", fontWeight:600 }}>
             <span style={{ color:"#F59E0B" }}>★</span>{item.rating.toFixed(1)}
@@ -420,6 +447,9 @@ export default function App() {
     .cat{border:1.5px solid #E5E7EB;border-radius:100px;padding:8px 16px;background:#fff;cursor:pointer;transition:all 0.15s;white-space:nowrap;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:#374151;display:flex;align-items:center;gap:5px;}
     .cat:hover{border-color:#16A34A;background:#F0FDF4;}
     .cat.active{background:#111;color:#fff;border-color:#111;}
+    .lang{display:flex;background:#fff;border:1.5px solid #E5E7EB;border-radius:100px;padding:2px;}
+    .lang button{border:none;background:none;border-radius:100px;padding:5px 9px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;color:#9CA3AF;cursor:pointer;}
+    .lang button.on{background:#111;color:#fff;}
     .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
 
     /* Modal overlay */
@@ -506,7 +536,7 @@ export default function App() {
   // ── NOTIFICATION ──────────────────────────────────────────────────────────
   const Notif = () => notif ? (
     <div className="notif" style={{ background: notif.type==="error" ? "#EF4444" : "#111", color:"#fff" }}>
-      {notif.msg}
+      {t(notif.msg)}
     </div>
   ) : null;
 
@@ -516,7 +546,7 @@ export default function App() {
       <div className="modal" onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"24px" }}>
           <div style={{ fontFamily:"'Fraunces',serif", fontSize:"26px", fontWeight:600, color:"#111" }}>
-            {authMode==="login" ? "Welcome back" : "Join lend."}
+            {authMode==="login" ? t("Welcome back") : t("Join lend.")}
           </div>
           <button className="btn btn-ghost" onClick={()=>setShowAuth(false)} style={{ fontSize:"20px", padding:"6px 10px" }}>×</button>
         </div>
@@ -524,23 +554,23 @@ export default function App() {
         {authStep === 0 && (
           <div style={{ display:"flex", flexDirection:"column", gap:"12px" }}>
             {authMode==="signup" && (
-              <input className="inp" placeholder="Full name" value={authForm.name} onChange={e=>setAuthForm(f=>({...f,name:e.target.value}))} />
+              <input className="inp" placeholder={t("Full name")} value={authForm.name} onChange={e=>setAuthForm(f=>({...f,name:e.target.value}))} />
             )}
-            <input className="inp" placeholder="Email address" type="email" value={authForm.email} onChange={e=>setAuthForm(f=>({...f,email:e.target.value}))} />
-            <input className="inp" placeholder="Password" type="password" value={authForm.password} onChange={e=>setAuthForm(f=>({...f,password:e.target.value}))} />
+            <input className="inp" placeholder={t("Email address")} type="email" value={authForm.email} onChange={e=>setAuthForm(f=>({...f,email:e.target.value}))} />
+            <input className="inp" placeholder={t("Password")} type="password" value={authForm.password} onChange={e=>setAuthForm(f=>({...f,password:e.target.value}))} />
             <button className="btn btn-dark btn-lg btn-full" onClick={handleLogin} style={{ marginTop:"8px" }}>
-              {authMode==="login" ? "Log in" : "Create account"}
+              {authMode==="login" ? t("Log in") : t("Create account")}
             </button>
             <div style={{ textAlign:"center", fontSize:"13px", color:"#6B7280" }}>
-              {authMode==="login" ? "No account? " : "Already have one? "}
+              {authMode==="login" ? (t("No account?")+" ") : (t("Already have one?")+" ")}
               <button onClick={()=>setAuthMode(m=>m==="login"?"signup":"login")} style={{ background:"none", border:"none", color:"#16A34A", fontWeight:600, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontSize:"13px" }}>
-                {authMode==="login" ? "Sign up" : "Log in"}
+                {authMode==="login" ? t("Sign up") : t("Log in")}
               </button>
             </div>
 
             <div style={{ display:"flex", alignItems:"center", gap:"12px", margin:"8px 0" }}>
               <div style={{ flex:1, height:"1px", background:"#F0EFEC" }} />
-              <span style={{ fontSize:"12px", color:"#9CA3AF" }}>or continue with</span>
+              <span style={{ fontSize:"12px", color:"#9CA3AF" }}>{t("or continue with")}</span>
               <div style={{ flex:1, height:"1px", background:"#F0EFEC" }} />
             </div>
 
@@ -561,14 +591,19 @@ export default function App() {
       {!minimal && (
         <div className="searchbar hide-mobile" style={{ flex:1, maxWidth:"360px", margin:"0 24px" }}>
           <span style={{ fontSize:"16px", marginRight:"6px" }}>🔍</span>
-          <input placeholder="Search items, cities..." value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==="Enter"&&setScreen("browse")} />
+          <input placeholder={t("Search items, cities...")} value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==="Enter"&&setScreen("browse")} />
         </div>
       )}
 
       <div style={{ display:"flex", alignItems:"center", gap:"8px" }}>
+        <div className="lang" role="group" aria-label={t("Language")}>
+          {["az","en"].map(l=>(
+            <button key={l} className={lang===l?"on":""} onClick={()=>setLang(l)} aria-pressed={lang===l}>{l.toUpperCase()}</button>
+          ))}
+        </div>
         {user ? (
           <>
-            <button className="btn btn-ghost hide-mobile" onClick={()=>setScreen("list")}>List an item</button>
+            <button className="btn btn-ghost hide-mobile" onClick={()=>setScreen("list")}>{t("List an item")}</button>
             <button className="btn btn-ghost hide-mobile" onClick={()=>{ setDashTab("overview"); setScreen("dashboard"); }}>
               <Avatar name={user.name} size={28} bg="#16A34A" />
               {user.name.split(" ")[0]}
@@ -577,8 +612,8 @@ export default function App() {
           </>
         ) : (
           <>
-            <button className="btn btn-ghost hide-mobile" onClick={()=>{ setAuthMode("login"); setShowAuth(true); }}>Log in</button>
-            <button className="btn btn-green" onClick={()=>{ setAuthMode("signup"); setShowAuth(true); }}>Sign up</button>
+            <button className="btn btn-ghost hide-mobile" onClick={()=>{ setAuthMode("login"); setShowAuth(true); }}>{t("Log in")}</button>
+            <button className="btn btn-green" onClick={()=>{ setAuthMode("signup"); setShowAuth(true); }}>{t("Sign up")}</button>
           </>
         )}
       </div>
@@ -603,7 +638,7 @@ export default function App() {
           { id:4,  bottom:"16%", left:"5%",  rot:"3deg",  delay:"2s" },
           { id:5,  bottom:"14%", right:"5%", rot:"-3deg", delay:"0.5s" },
         ].map(f=>{
-          const item = LISTINGS.find(l=>l.id===f.id);
+          const item = listings.find(l=>l.id===f.id);
           return (
             <div key={f.id} className="hero-float" onClick={()=>openListing(item)} style={{ position:"absolute", ...Object.fromEntries(["top","left","right","bottom"].filter(k=>f[k]).map(k=>[k,f[k]])), animation:`float 5s ease ${f.delay} infinite`, zIndex:1, cursor:"pointer" }}>
               <div className="card" style={{ width:"190px", padding:"8px", boxShadow:"0 12px 32px rgba(0,0,0,0.12)", borderRadius:"18px", transform:`rotate(${f.rot})` }}>
@@ -611,7 +646,7 @@ export default function App() {
                 <div style={{ padding:"8px 4px 2px", textAlign:"left" }}>
                   <div style={{ fontWeight:600, fontSize:"12px", color:"#111", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{item.title}</div>
                   <div style={{ display:"flex", justifyContent:"space-between", fontSize:"11px", marginTop:"2px" }}>
-                    <span style={{ color:"#16A34A", fontWeight:700 }}>₼{item.price}/day</span>
+                    <span style={{ color:"#16A34A", fontWeight:700 }}>₼{item.price}{t("/day")}</span>
                     <span style={{ color:"#6B7280", display:"inline-flex" }}><MetroTag station={item.metro} city={item.city} /></span>
                   </div>
                 </div>
@@ -623,27 +658,29 @@ export default function App() {
         <div style={{ position:"relative", zIndex:2, maxWidth:"720px" }}>
           <div style={{ display:"inline-flex", alignItems:"center", gap:"6px", background:"#DCFCE7", border:"1px solid #BBF7D0", borderRadius:"100px", padding:"6px 16px", marginBottom:"24px", animation:"fadeIn 0.6s ease" }}>
             <div style={{ width:"6px", height:"6px", borderRadius:"50%", background:"#16A34A", animation:"pulse 2s ease infinite" }} />
-            <span style={{ fontSize:"12px", fontWeight:600, color:"#16A34A" }}>Live in Baku · pick up near your metro</span>
+            <span style={{ fontSize:"12px", fontWeight:600, color:"#16A34A" }}>{t("Live in Baku · pick up near your metro")}</span>
           </div>
 
           <h1 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(44px,9vw,96px)", fontWeight:700, lineHeight:0.92, letterSpacing:"-3px", color:"#111", marginBottom:"24px", animation:"fadeUp 0.7s ease" }}>
-            Rent <em style={{ fontStyle:"italic", color:"#16A34A" }}>anything</em><br/>from real<br/>people near you.
+            {lang === "az"
+              ? <><em style={{ fontStyle:"italic", color:"#16A34A" }}>Hər şeyi</em><br/>qonşundan<br/>icarəyə götür.</>
+              : <>{t("Rent")} <em style={{ fontStyle:"italic", color:"#16A34A" }}>anything</em><br/>from real<br/>people near you.</>}
           </h1>
 
           <p style={{ fontSize:"18px", fontWeight:300, color:"#6B7280", marginBottom:"40px", lineHeight:1.7, maxWidth:"500px", margin:"0 auto 40px", animation:"fadeUp 0.7s ease 0.1s both" }}>
-            Cameras. Cars. Drones. Tools. Apartments. Instruments. One platform. Your neighborhood.
+            {t("Cameras. Cars. Drones. Tools. Apartments. Instruments. One platform. Your neighborhood.")}
           </p>
 
           <div style={{ maxWidth:"520px", margin:"0 auto 32px", animation:"fadeUp 0.7s ease 0.15s both" }}>
             <div className="searchbar" style={{ padding:"10px 10px 10px 20px" }}>
               <span style={{ fontSize:"20px", marginRight:"8px" }}>🔍</span>
-              <input style={{ fontSize:"16px" }} placeholder="What do you want to rent?" value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==="Enter"&&setScreen("browse")} />
-              <button className="btn btn-green btn-lg" onClick={()=>setScreen("browse")}>Search</button>
+              <input style={{ fontSize:"16px" }} placeholder={t("What do you want to rent?")} value={search} onChange={e=>setSearch(e.target.value)} onKeyDown={e=>e.key==="Enter"&&setScreen("browse")} />
+              <button className="btn btn-green btn-lg" onClick={()=>setScreen("browse")}>{t("Search")}</button>
             </div>
           </div>
 
           <div style={{ display:"flex", gap:"8px", justifyContent:"center", flexWrap:"wrap", animation:"fadeUp 0.7s ease 0.2s both" }}>
-            {[["📷 Cameras","cameras"],["🚗 Cars","vehicles"],["🏠 Spaces","homes"],["🎸 Music","music"],["💻 Tech","tech"],["⛺ Outdoor","outdoor"]].map(([tag,id])=>(
+            {[[t("📷 Cameras"),"cameras"],[t("🚗 Cars"),"vehicles"],[t("🏠 Spaces"),"homes"],[t("🎸 Music"),"music"],[t("💻 Tech"),"tech"],[t("⛺ Outdoor"),"outdoor"]].map(([tag,id])=>(
               <button key={tag} className="cat" onClick={()=>{ setSearch(""); setCat(id); go("browse"); }} style={{ fontSize:"12px", padding:"6px 12px" }}>{tag}</button>
             ))}
           </div>
@@ -653,9 +690,9 @@ export default function App() {
       {/* Stats */}
       <div style={{ background:"#111", padding:"40px 32px" }}>
         <div style={{ maxWidth:"900px", margin:"0 auto", display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))", gap:"32px" }}>
-          {[["₼0","to list your item"],["10%","platform fee only"],["90%","goes to the owner"],["Ⓜ","pickup near your metro"],["7+","days = 20% off"]].map(([n,l])=>(
+          {[["₼0",t("to list your item")],["10%",t("platform fee only")],["90%",t("goes to the owner")],["M",t("pickup near your metro")],["7+",t("days = 20% off")]].map(([n,l])=>(
             <div key={l} style={{ textAlign:"center" }}>
-              <div style={{ fontFamily:"'Fraunces',serif", fontSize:"36px", fontWeight:700, color:"#fff", marginBottom:"4px" }}>{n}</div>
+              <div style={{ fontFamily:"'Fraunces',serif", fontSize:"36px", fontWeight:700, color:"#fff", marginBottom:"4px", minHeight:"1.2em", display:"flex", alignItems:"center", justifyContent:"center" }}>{n==="M" ? <span className="metro-m" style={{ width:"40px", height:"40px", fontSize:"20px", fontFamily:"'DM Sans',sans-serif" }}>M</span> : n}</div>
               <div style={{ fontSize:"13px", color:"rgba(255,255,255,0.4)", fontWeight:300 }}>{l}</div>
             </div>
           ))}
@@ -665,16 +702,16 @@ export default function App() {
       {/* How it works */}
       <div style={{ padding:"80px 16px", maxWidth:"1000px", margin:"0 auto" }}>
         <div style={{ textAlign:"center", marginBottom:"56px" }}>
-          <div style={{ fontSize:"12px", fontWeight:600, color:"#16A34A", letterSpacing:"2px", textTransform:"uppercase", marginBottom:"10px" }}>Simple by design</div>
-          <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(32px,5vw,52px)", fontWeight:700, letterSpacing:"-1px", color:"#111" }}>How lend. works</h2>
+          <div style={{ fontSize:"12px", fontWeight:600, color:"#16A34A", letterSpacing:"2px", textTransform:"uppercase", marginBottom:"10px" }}>{t("Simple by design")}</div>
+          <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(32px,5vw,52px)", fontWeight:700, letterSpacing:"-1px", color:"#111" }}>{t("How lend. works")}</h2>
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))", gap:"16px" }}>
           {[
-            { icon:"🔍", title:"Find", desc:"Browse thousands of items near you. Filter by category, price, or date." },
-            { icon:"✅", title:"Verify", desc:"One-time ID check. Takes about a minute. Keeps everyone safe." },
-            { icon:"📅", title:"Book", desc:"Pick your dates, pay securely. Deposit held and released automatically." },
-            { icon:"🤝", title:"Meet", desc:"Pick up, use, return. Leave a review. Build your rental reputation." },
-            { icon:"💰", title:"Earn", desc:"List your idle items and earn while they sit. You keep 90% of every booking." },
+            { icon:"🔍", title:t("Find"), desc:t("Browse thousands of items near you. Filter by category, price, or date.") },
+            { icon:"✅", title:t("Verify"), desc:t("One-time ID check. Takes about a minute. Keeps everyone safe.") },
+            { icon:"📅", title:t("Book"), desc:t("Pick your dates, pay securely. Deposit held and released automatically.") },
+            { icon:"🤝", title:t("Meet"), desc:t("Pick up, use, return. Leave a review. Build your rental reputation.") },
+            { icon:"💰", title:t("Earn"), desc:t("List your idle items and earn while they sit. You keep 90% of every booking.") },
           ].map((s,i)=>(
             <div key={i} className="card" style={{ padding:"28px 24px", animation:`fadeUp 0.5s ease ${i*0.08}s both` }}>
               <div style={{ fontSize:"36px", marginBottom:"14px" }}>{s.icon}</div>
@@ -689,10 +726,10 @@ export default function App() {
       <div style={{ padding:"0 16px 80px", maxWidth:"1200px", margin:"0 auto" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"28px" }}>
           <div>
-            <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, letterSpacing:"-0.5px", color:"#111" }}>Popular near you</h2>
-            <div style={{ fontSize:"13px", color:"#9CA3AF", marginTop:"4px" }}>Early preview: these are example listings while we launch.</div>
+            <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, letterSpacing:"-0.5px", color:"#111" }}>{t("Popular near you")}</h2>
+            <div style={{ fontSize:"13px", color:"#9CA3AF", marginTop:"4px" }}>{t("Early preview: these are example listings while we launch.")}</div>
           </div>
-          <button className="btn btn-outline" onClick={()=>{ setCat("all"); setMetroFilter("all"); go("browse"); }}>View all →</button>
+          <button className="btn btn-outline" onClick={()=>{ setCat("all"); setMetroFilter("all"); go("browse"); }}>{t("View all →")}</button>
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))", gap:"16px" }}>
           {listings.slice(0,8).map(renderCard)}
@@ -703,9 +740,9 @@ export default function App() {
       <div style={{ padding:"0 16px 80px", maxWidth:"1200px", margin:"0 auto" }}>
         <div className="card" style={{ padding:"clamp(24px,4vw,40px)", display:"grid", gap:"20px" }}>
           <div>
-            <div style={{ fontSize:"12px", fontWeight:600, color:"#E4002B", letterSpacing:"2px", textTransform:"uppercase", marginBottom:"10px", display:"flex", alignItems:"center", gap:"8px" }}><span className="metro-m">M</span> Metro pickup</div>
-            <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(26px,4vw,40px)", fontWeight:700, letterSpacing:"-0.5px", color:"#111", lineHeight:1.1, textWrap:"balance" }}>Pick it up on your way home.</h2>
-            <p style={{ fontSize:"15px", color:"#6B7280", lineHeight:1.7, marginTop:"10px", maxWidth:"560px" }}>Every Baku listing shows its nearest metro station. Choose yours and see what you can grab without a taxi.</p>
+            <div style={{ fontSize:"12px", fontWeight:600, color:"#E4002B", letterSpacing:"2px", textTransform:"uppercase", marginBottom:"10px", display:"flex", alignItems:"center", gap:"8px" }}><span className="metro-m">M</span> {t("Metro pickup")}</div>
+            <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(26px,4vw,40px)", fontWeight:700, letterSpacing:"-0.5px", color:"#111", lineHeight:1.1, textWrap:"balance" }}>{t("Pick it up on your way home.")}</h2>
+            <p style={{ fontSize:"15px", color:"#6B7280", lineHeight:1.7, marginTop:"10px", maxWidth:"560px" }}>{t("Every Baku listing shows its nearest metro station. Choose yours and see what you can grab without a taxi.")}</p>
           </div>
           <div style={{ display:"flex", gap:"8px", flexWrap:"wrap" }}>
             {METRO.filter(m=>listings.some(l=>l.metro===m)).map(m=>(
@@ -721,15 +758,15 @@ export default function App() {
       {/* What makes LEND different */}
       <div style={{ padding:"0 16px 80px", maxWidth:"1200px", margin:"0 auto" }}>
         <div style={{ marginBottom:"28px" }}>
-          <div style={{ fontSize:"12px", fontWeight:600, color:"#16A34A", letterSpacing:"2px", textTransform:"uppercase", marginBottom:"10px" }}>Only on lend.</div>
-          <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(28px,4vw,44px)", fontWeight:700, letterSpacing:"-0.5px", color:"#111", lineHeight:1.1 }}>Built for renting, not just listing.</h2>
+          <div style={{ fontSize:"12px", fontWeight:600, color:"#16A34A", letterSpacing:"2px", textTransform:"uppercase", marginBottom:"10px" }}>{t("Only on lend.")}</div>
+          <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(28px,4vw,44px)", fontWeight:700, letterSpacing:"-0.5px", color:"#111", lineHeight:1.1 }}>{t("Built for renting, not just listing.")}</h2>
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))", gap:"16px" }}>
           {[
-            { k:"₼", title:"Rent vs buy", desc:"Every item shows what it costs new, so you see exactly how much you save by renting." },
-            { k:"%", title:"Longer = cheaper", desc:"10% off from 3 days, 20% off from a week. Applied automatically at checkout." },
-            { k:"📸", title:"Pickup photo check", desc:"Both sides snap the item's condition at handover. Disputes get settled with photos, not arguments." },
-            { k:"🗓", title:"Live calendar", desc:"See booked days before you ask. Pick your dates and the price updates instantly." },
+            { k:"₼", title:t("Rent vs buy"), desc:t("Every item shows what it costs new, so you see exactly how much you save by renting.") },
+            { k:"%", title:t("Longer = cheaper"), desc:t("10% off from 3 days, 20% off from a week. Applied automatically at checkout.") },
+            { k:"📸", title:t("Pickup photo check"), desc:t("Both sides snap the item's condition at handover. Disputes get settled with photos, not arguments.") },
+            { k:"🗓", title:t("Live calendar"), desc:t("See booked days before you ask. Pick your dates and the price updates instantly.") },
           ].map((f,i)=>(
             <div key={f.title} className="card" style={{ padding:"24px", animation:`fadeUp 0.5s ease ${i*0.06}s both` }}>
               <div style={{ width:"44px", height:"44px", borderRadius:"12px", background:"#111", color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Fraunces',serif", fontSize:"20px", fontWeight:700, marginBottom:"16px" }}>{f.k}</div>
@@ -745,16 +782,16 @@ export default function App() {
         <div style={{ maxWidth:"900px", margin:"0 auto" }}>
           <div className="stack-mobile" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"64px", alignItems:"center" }}>
             <div>
-              <div style={{ fontSize:"12px", fontWeight:600, color:"#16A34A", letterSpacing:"2px", textTransform:"uppercase", marginBottom:"12px" }}>Protection built in</div>
-              <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(28px,4vw,44px)", fontWeight:700, letterSpacing:"-0.5px", color:"#111", marginBottom:"20px", lineHeight:1.1 }}>Every rental is<br/><em style={{ fontStyle:"italic" }}>protected.</em></h2>
+              <div style={{ fontSize:"12px", fontWeight:600, color:"#16A34A", letterSpacing:"2px", textTransform:"uppercase", marginBottom:"12px" }}>{t("Protection built in")}</div>
+              <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(28px,4vw,44px)", fontWeight:700, letterSpacing:"-0.5px", color:"#111", marginBottom:"20px", lineHeight:1.1 }}>{t("Every rental is")}<br/><em style={{ fontStyle:"italic" }}>{t("protected.")}</em></h2>
               <p style={{ fontSize:"15px", color:"#6B7280", lineHeight:1.8, marginBottom:"28px" }}>
-                Every rental has a deposit, a verified renter, and photos of the item's condition at pickup. If something goes wrong, there's a clear record of what happened.
+                {t("Every rental has a deposit, a verified renter, and photos of the item's condition at pickup. If something goes wrong, there's a clear record of what happened.")}
               </p>
               {[
-                { icon:"💳", title:"Secure deposits", desc:"Held during the rental, released on safe return" },
-                { icon:"✅", title:"ID verification", desc:"Every renter verifies their ID before booking" },
-                { icon:"📸", title:"Pickup photo check", desc:"Condition photos from both sides at handover" },
-                { icon:"⭐", title:"Review system", desc:"Two-way reviews build trust" },
+                { icon:"💳", title:t("Secure deposits"), desc:t("Held during the rental, released on safe return") },
+                { icon:"✅", title:t("ID verification"), desc:t("Every renter verifies their ID before booking") },
+                { icon:"📸", title:t("Pickup photo check"), desc:t("Condition photos from both sides at handover") },
+                { icon:"⭐", title:t("Review system"), desc:t("Two-way reviews build trust") },
               ].map(f=>(
                 <div key={f.title} style={{ display:"flex", gap:"14px", alignItems:"flex-start", marginBottom:"16px" }}>
                   <div style={{ width:"36px", height:"36px", borderRadius:"10px", background:"#F0FDF4", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"18px", flexShrink:0 }}>{f.icon}</div>
@@ -767,10 +804,10 @@ export default function App() {
             </div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px" }}>
               {[
-                { label:"Owners keep of every booking", value:"90%", icon:"💰", color:"#F0FDF4" },
-                { label:"To list an item", value:"₼0", icon:"📦", color:"#FEF3C7" },
-                { label:"Photos at every pickup", value:"3", icon:"📸", color:"#EFF6FF" },
-                { label:"To verify your ID", value:"1 min", icon:"⚡", color:"#FDF4FF" },
+                { label:t("Owners keep of every booking"), value:"90%", icon:"💰", color:"#F0FDF4" },
+                { label:t("To list an item"), value:"₼0", icon:"📦", color:"#FEF3C7" },
+                { label:t("Photos at every pickup"), value:"3", icon:"📸", color:"#EFF6FF" },
+                { label:t("To verify your ID"), value:t("1 min"), icon:"⚡", color:"#FDF4FF" },
               ].map(s=>(
                 <div key={s.label} className="card" style={{ padding:"24px", background:s.color, border:"none" }}>
                   <div style={{ fontSize:"28px", marginBottom:"8px" }}>{s.icon}</div>
@@ -786,12 +823,12 @@ export default function App() {
       {/* CTA */}
       <div style={{ background:"#111", padding:"80px 32px", textAlign:"center" }}>
         <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(36px,6vw,64px)", fontWeight:700, letterSpacing:"-1px", color:"#fff", marginBottom:"16px", lineHeight:1.05 }}>
-          Start earning<br/>from what you own.
+          {t("Start earning")}<br/>{t("from what you own.")}
         </h2>
-        <p style={{ fontSize:"18px", color:"rgba(255,255,255,0.45)", marginBottom:"36px", fontWeight:300 }}>Your camera earns ₼35/day sitting in your bag. List it in 3 minutes.</p>
+        <p style={{ fontSize:"18px", color:"rgba(255,255,255,0.45)", marginBottom:"36px", fontWeight:300 }}>{t("Your camera earns ₼35/day sitting in your bag. List it in 3 minutes.")}</p>
         <div style={{ display:"flex", gap:"12px", justifyContent:"center", flexWrap:"wrap" }}>
-          <button className="btn btn-green btn-xl" onClick={()=>setScreen("list")}>List your first item →</button>
-          <button className="btn btn-outline btn-xl" onClick={()=>setScreen("browse")} style={{ color:"#fff", borderColor:"rgba(255,255,255,0.2)" }}>Browse items</button>
+          <button className="btn btn-green btn-xl" onClick={()=>setScreen("list")}>{t("List your first item →")}</button>
+          <button className="btn btn-outline btn-xl" onClick={()=>setScreen("browse")} style={{ color:"#fff", borderColor:"rgba(255,255,255,0.2)" }}>{t("Browse items")}</button>
         </div>
       </div>
 
@@ -800,9 +837,9 @@ export default function App() {
         <div className="stack-mobile" style={{ maxWidth:"1100px", margin:"0 auto", display:"grid", gridTemplateColumns:"2fr 1fr 1fr 1fr", gap:"40px", marginBottom:"40px" }}>
           <div>
             <div className="logo" style={{ color:"#fff", marginBottom:"12px", display:"block" }}>lend<span>.</span></div>
-            <div style={{ fontSize:"13px", color:"rgba(255,255,255,0.3)", lineHeight:1.7, fontStyle:"italic", fontFamily:"'Fraunces',serif" }}>Making ownership optional, one rental at a time.</div>
+            <div style={{ fontSize:"13px", color:"rgba(255,255,255,0.3)", lineHeight:1.7, fontStyle:"italic", fontFamily:"'Fraunces',serif" }}>{t("Making ownership optional, one rental at a time.")}</div>
           </div>
-          {[["Rent",["Browse all","Cameras","Vehicles","Spaces","Tools"]],["Earn",["List an item","How pricing works","Insurance","Owner dashboard"]],["Company",["About","Blog","Careers","Contact","Privacy"]]].map(([title,links])=>(
+          {[[t("Rent"),[t("Browse all"),t("Cameras"),t("Vehicles"),t("Spaces"),t("Tools")]],[t("Earn"),[t("List an item"),t("How pricing works"),t("Insurance"),t("Owner dashboard")]],[t("Company"),[t("About"),t("Blog"),t("Careers"),t("Contact"),t("Privacy")]]].map(([title,links])=>(
             <div key={title}>
               <div style={{ fontSize:"11px", fontWeight:600, color:"rgba(255,255,255,0.4)", letterSpacing:"2px", textTransform:"uppercase", marginBottom:"14px" }}>{title}</div>
               {links.map(l=><div key={l} style={{ fontSize:"13px", color:"rgba(255,255,255,0.35)", marginBottom:"10px", cursor:"pointer" }}>{l}</div>)}
@@ -810,8 +847,8 @@ export default function App() {
           ))}
         </div>
         <div style={{ borderTop:"1px solid rgba(255,255,255,0.06)", paddingTop:"24px", display:"flex", justifyContent:"space-between", flexWrap:"wrap", gap:"12px" }}>
-          <span style={{ fontSize:"12px", color:"rgba(255,255,255,0.2)" }}>© {new Date().getFullYear()} lend. · Baku, Azerbaijan</span>
-          <span style={{ fontSize:"12px", color:"rgba(255,255,255,0.2)" }}>Product photos from Unsplash</span>
+          <span style={{ fontSize:"12px", color:"rgba(255,255,255,0.2)" }}>© {new Date().getFullYear()} {t("lend. · Baku, Azerbaijan")}</span>
+          <span style={{ fontSize:"12px", color:"rgba(255,255,255,0.2)" }}>{t("Product photos from Unsplash")}</span>
         </div>
       </div>
     </div>
@@ -827,47 +864,47 @@ export default function App() {
         <div style={{ marginBottom:"20px" }}>
           <div className="searchbar" style={{ maxWidth:"520px" }}>
             <span style={{ fontSize:"18px", marginRight:"6px" }}>🔍</span>
-            <input placeholder="Search anything..." value={search} onChange={e=>setSearch(e.target.value)} />
+            <input placeholder={t("Search anything...")} value={search} onChange={e=>setSearch(e.target.value)} />
             {search && <button onClick={()=>setSearch("")} style={{ background:"none", border:"none", cursor:"pointer", color:"#9CA3AF", fontSize:"18px", padding:"0 8px" }}>×</button>}
           </div>
         </div>
 
         <div style={{ display:"flex", gap:"8px", overflowX:"auto", paddingBottom:"8px", marginBottom:"24px" }}>
-          {CATS.map(c=><button key={c.id} className={`cat ${cat===c.id?"active":""}`} onClick={()=>setCat(c.id)}>{c.icon} {c.label}</button>)}
+          {CATS.map(c=><button key={c.id} className={`cat ${cat===c.id?"active":""}`} onClick={()=>setCat(c.id)}>{c.icon} {t(c.label)}</button>)}
         </div>
 
         {/* Filters */}
         <div style={{ display:"flex", gap:"8px", flexWrap:"wrap", alignItems:"center", marginBottom:"16px" }}>
-          <label className="sr-only" htmlFor="f-metro">Metro station</label>
+          <label className="sr-only" htmlFor="f-metro">{t("Metro station")}</label>
           <select id="f-metro" className="sel" value={metroFilter} onChange={e=>setMetroFilter(e.target.value)} style={metroFilter!=="all"?{ borderColor:"#E4002B", color:"#E4002B" }:undefined}>
-            <option value="all">Ⓜ Any metro station</option>
-            {METRO.map(m=><option key={m} value={m}>Ⓜ {m}</option>)}
+            <option value="all">{t("Any metro station")}</option>
+            {METRO.map(m=><option key={m} value={m}>{t("{m} metro", { m })}</option>)}
           </select>
-          <label className="sr-only" htmlFor="f-price">Max price per day</label>
+          <label className="sr-only" htmlFor="f-price">{t("Max price per day")}</label>
           <select id="f-price" className="sel" value={maxPrice} onChange={e=>setMaxPrice(Number(e.target.value))}>
-            <option value={0}>Any price</option>
-            {[10,25,50,100].map(p=><option key={p} value={p}>Up to ₼{p}/day</option>)}
+            <option value={0}>{t("Any price")}</option>
+            {[10,25,50,100].map(p=><option key={p} value={p}>{t("Up to ₼{p}/day", { p })}</option>)}
           </select>
-          <button className={`chip ${insuredOnly?"on":""}`} onClick={()=>setInsuredOnly(v=>!v)} aria-pressed={insuredOnly}>🛡 Protected only</button>
+          <button className={`chip ${insuredOnly?"on":""}`} onClick={()=>setInsuredOnly(v=>!v)} aria-pressed={insuredOnly}>{t("🛡 Protected only")}</button>
           <div style={{ flex:1 }} />
-          <label className="sr-only" htmlFor="f-sort">Sort by</label>
+          <label className="sr-only" htmlFor="f-sort">{t("Sort by")}</label>
           <select id="f-sort" className="sel" value={sort} onChange={e=>setSort(e.target.value)}>
-            <option value="popular">Most rented</option>
-            <option value="rating">Top rated</option>
-            <option value="price-asc">Price: low to high</option>
-            <option value="price-desc">Price: high to low</option>
+            <option value="popular">{t("Most rented")}</option>
+            <option value="rating">{t("Top rated")}</option>
+            <option value="price-asc">{t("Price: low to high")}</option>
+            <option value="price-desc">{t("Price: high to low")}</option>
           </select>
         </div>
 
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"20px", gap:"12px", flexWrap:"wrap" }}>
           <div style={{ fontSize:"14px", color:"#6B7280" }}>
-            <strong style={{ color:"#111" }}>{filtered.length}</strong> item{filtered.length===1?"":"s"}
-            {search && <> for “{search}”</>}
-            {metroFilter!=="all" && <> near <strong style={{ color:"#111" }}>{metroFilter}</strong> metro</>}
-            <span style={{ color:"#9CA3AF" }}> · example listings</span>
+            <strong style={{ color:"#111" }}>{filtered.length}</strong> {t(filtered.length===1 ? "item" : "items")}
+            {search && <> {t("for “{q}”", { q:search })}</>}
+            {metroFilter!=="all" && <> · <strong style={{ color:"#111" }}>{t("{m} metro", { m:metroFilter })}</strong></>}
+            <span style={{ color:"#9CA3AF" }}> · {t("example listings")}</span>
           </div>
           {(metroFilter!=="all"||insuredOnly||maxPrice||cat!=="all"||search) && (
-            <button className="btn btn-ghost" style={{ padding:"6px 10px", fontSize:"12px" }} onClick={()=>{ setMetroFilter("all"); setInsuredOnly(false); setMaxPrice(0); setCat("all"); setSearch(""); }}>Clear filters</button>
+            <button className="btn btn-ghost" style={{ padding:"6px 10px", fontSize:"12px" }} onClick={()=>{ setMetroFilter("all"); setInsuredOnly(false); setMaxPrice(0); setCat("all"); setSearch(""); }}>{t("Clear filters")}</button>
           )}
         </div>
 
@@ -878,9 +915,9 @@ export default function App() {
         {filtered.length === 0 && (
           <div style={{ textAlign:"center", padding:"64px 16px" }}>
             <div style={{ fontSize:"48px", marginBottom:"16px" }}>🔍</div>
-            <div style={{ fontFamily:"'Fraunces',serif", fontSize:"24px", color:"#111", marginBottom:"8px" }}>Nothing found</div>
-            <div style={{ fontSize:"14px", color:"#9CA3AF", marginBottom:"24px" }}>Try another metro station or clear the filters, or be the first to list it.</div>
-            <button className="btn btn-green btn-lg" onClick={()=>setScreen("list")}>List it yourself</button>
+            <div style={{ fontFamily:"'Fraunces',serif", fontSize:"24px", color:"#111", marginBottom:"8px" }}>{t("Nothing found")}</div>
+            <div style={{ fontSize:"14px", color:"#9CA3AF", marginBottom:"24px" }}>{t("Try another metro station or clear the filters, or be the first to list it.")}</div>
+            <button className="btn btn-green btn-lg" onClick={()=>setScreen("list")}>{t("List it yourself")}</button>
           </div>
         )}
       </div>
@@ -899,41 +936,41 @@ export default function App() {
       {showAuth && <AuthModal />}
       <Notif />
       <div style={{ maxWidth:"1100px", margin:"0 auto", padding:"90px 16px 60px" }}>
-        <button className="btn btn-ghost" onClick={()=>go("browse")} style={{ marginBottom:"20px" }}>← Back to browse</button>
+        <button className="btn btn-ghost" onClick={()=>go("browse")} style={{ marginBottom:"20px" }}>{t("← Back to browse")}</button>
 
         <div className="stack-mobile" style={{ display:"grid", gridTemplateColumns:"minmax(0,1fr) 380px", gap:"48px", alignItems:"start" }}>
           {/* Left */}
           <div style={{ minWidth:0 }}>
             <ItemPhoto item={item} height="clamp(260px,45vw,440px)" radius="24px" emojiSize={110}>
               <div className="ph-shade" style={{ position:"absolute", inset:0 }} />
-              {item.insured && <div style={{ position:"absolute", top:"16px", left:"16px" }}><span className="pill-green" style={{ fontSize:"11px" }}>🛡 Deposit protected</span></div>}
-              {item.verified && <div style={{ position:"absolute", top:"16px", right:"16px" }}><span className="pill-light" style={{ fontSize:"11px" }}>✓ Verified item</span></div>}
+              {item.insured && <div style={{ position:"absolute", top:"16px", left:"16px" }}><span className="pill-green" style={{ fontSize:"11px" }}>{t("🛡 Deposit protected")}</span></div>}
+              {item.verified && <div style={{ position:"absolute", top:"16px", right:"16px" }}><span className="pill-light" style={{ fontSize:"11px" }}>{t("✓ Verified item")}</span></div>}
             </ItemPhoto>
 
             <div style={{ display:"flex", gap:"8px", margin:"24px 0 16px", flexWrap:"wrap" }}>
-              <Badge label={item.availability} color={item.availability==="Available now"?"#DCFCE7":"#FEF3C7"} text={item.availability==="Available now"?"#16A34A":"#D97706"} />
-              <Badge label={CATS.find(c=>c.id===item.cat)?.label || ""} color="#EFF6FF" text="#2563EB" />
-              {item.deposit > 0 && <Badge label={`₼${item.deposit} deposit`} color="#FDF4FF" text="#7C3AED" />}
+              <Badge label={item.availability} color={item.availability===t("Available now")?"#DCFCE7":"#FEF3C7"} text={item.availability===t("Available now")?"#16A34A":"#D97706"} />
+              <Badge label={t(CATS.find(c=>c.id===item.cat)?.label || "") || ""} color="#EFF6FF" text="#2563EB" />
+              {item.deposit > 0 && <Badge label={t("₼{n} deposit", { n:item.deposit })} color="#FDF4FF" text="#7C3AED" />}
             </div>
 
             <h1 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(28px,4vw,38px)", fontWeight:700, letterSpacing:"-0.5px", color:"#111", marginBottom:"8px", lineHeight:1.1, textWrap:"balance" }}>{item.title}</h1>
             <div style={{ fontSize:"14px", color:"#6B7280", marginBottom:"20px", display:"flex", gap:"8px", alignItems:"center", flexWrap:"wrap" }}>
-              {item.metro ? <>Pickup near <MetroTag station={item.metro} city={item.city} /> metro, {item.city}</> : <>📍 Pickup in {item.city}</>}
+              {item.metro ? <>{t("Pickup near")} <MetroTag station={item.metro} city={item.city} /> {t("metro, {city}", { city:t(item.city) })}</> : <>📍 {t("Pickup in {city}", { city:t(item.city) })}</>}
             </div>
 
             {/* Rent vs buy */}
             {item.retail && (
               <div className="card" style={{ padding:"20px", marginBottom:"24px", display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))", gap:"16px", alignItems:"center" }}>
                 <div>
-                  <div style={{ fontSize:"11px", fontWeight:600, color:"#9CA3AF", textTransform:"uppercase", letterSpacing:"1px", marginBottom:"4px" }}>Buying new</div>
+                  <div style={{ fontSize:"11px", fontWeight:600, color:"#9CA3AF", textTransform:"uppercase", letterSpacing:"1px", marginBottom:"4px" }}>{t("Buying new")}</div>
                   <div style={{ fontFamily:"'Fraunces',serif", fontSize:"26px", fontWeight:700, color:"#9CA3AF", textDecoration:"line-through", fontVariantNumeric:"tabular-nums" }}>₼{item.retail.toLocaleString("en")}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize:"11px", fontWeight:600, color:"#16A34A", textTransform:"uppercase", letterSpacing:"1px", marginBottom:"4px" }}>Renting for a week</div>
+                  <div style={{ fontSize:"11px", fontWeight:600, color:"#16A34A", textTransform:"uppercase", letterSpacing:"1px", marginBottom:"4px" }}>{t("Renting for a week")}</div>
                   <div style={{ fontFamily:"'Fraunces',serif", fontSize:"26px", fontWeight:700, color:"#111", fontVariantNumeric:"tabular-nums" }}>₼{rentWeek}</div>
                 </div>
                 <div style={{ background:"#F0FDF4", borderRadius:"12px", padding:"12px 14px", fontSize:"13px", color:"#166534", lineHeight:1.5 }}>
-                  You save <strong>₼{(item.retail - rentWeek).toLocaleString("en")}</strong>. That's {Math.round((1 - rentWeek/item.retail)*100)}% less than buying.
+                  {t("You save")} <strong>₼{(item.retail - rentWeek).toLocaleString("en")}</strong>. {t("That's {p}% less than buying.", { p:Math.round((1 - rentWeek/item.retail)*100) })}
                 </div>
               </div>
             )}
@@ -943,20 +980,20 @@ export default function App() {
               <Avatar name={item.owner} size={48} bg="#16A34A" />
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ fontWeight:600, fontSize:"15px", color:"#111" }}>{item.owner}</div>
-                <div style={{ fontSize:"12px", color:"#9CA3AF" }}>Member since {item.ownerJoined} · {item.reviews} rentals · replies in ~1 hr</div>
+                <div style={{ fontSize:"12px", color:"#9CA3AF" }}>{t("Member since {y} · {n} rentals · replies in ~1 hr", { y:item.ownerJoined, n:item.reviews })}</div>
               </div>
               <div style={{ textAlign:"right" }}>
                 <Stars r={item.ownerRating} />
-                <div style={{ fontSize:"12px", color:"#6B7280" }}>{item.ownerRating} rating</div>
+                <div style={{ fontSize:"12px", color:"#6B7280" }}>{t("{r} rating", { r:item.ownerRating })}</div>
               </div>
             </div>
 
-            <h3 style={{ fontFamily:"'Fraunces',serif", fontSize:"22px", fontWeight:600, color:"#111", marginBottom:"12px" }}>About this item</h3>
+            <h3 style={{ fontFamily:"'Fraunces',serif", fontSize:"22px", fontWeight:600, color:"#111", marginBottom:"12px" }}>{t("About this item")}</h3>
             <p style={{ fontSize:"15px", color:"#374151", lineHeight:1.8, marginBottom:"28px", maxWidth:"65ch" }}>{item.desc}</p>
 
             {/* Rules */}
             {item.rules?.length > 0 && <>
-              <h3 style={{ fontFamily:"'Fraunces',serif", fontSize:"22px", fontWeight:600, color:"#111", marginBottom:"12px" }}>Rental rules</h3>
+              <h3 style={{ fontFamily:"'Fraunces',serif", fontSize:"22px", fontWeight:600, color:"#111", marginBottom:"12px" }}>{t("Rental rules")}</h3>
               <div className="card" style={{ padding:"20px", marginBottom:"28px" }}>
                 {item.rules.map((r,i)=>(
                   <div key={i} style={{ display:"flex", gap:"10px", alignItems:"center", marginBottom: i<item.rules.length-1?"10px":0, fontSize:"14px", color:"#374151" }}>
@@ -969,15 +1006,15 @@ export default function App() {
             {/* Insurance details */}
             {item.insured && (
               <div style={{ background:"#F0FDF4", border:"1px solid #BBF7D0", borderRadius:"16px", padding:"20px", marginBottom:"28px" }}>
-                <div style={{ fontWeight:600, fontSize:"14px", color:"#166534", marginBottom:"10px" }}>🛡 How this rental is protected</div>
+                <div style={{ fontWeight:600, fontSize:"14px", color:"#166534", marginBottom:"10px" }}>{t("🛡 How this rental is protected")}</div>
                 <div style={{ fontSize:"13px", color:"#166534", lineHeight:1.7 }}>
-                  The owner holds a ₼{item.deposit} deposit that comes back after a safe return. At pickup, you and the owner both photograph the item, so any damage question is settled from the photos.
+                  {t("The owner holds a ₼{n} deposit that comes back after a safe return. At pickup, you and the owner both photograph the item, so any damage question is settled from the photos.", { n:item.deposit })}
                 </div>
               </div>
             )}
 
             {similar.length > 0 && <>
-              <h3 style={{ fontFamily:"'Fraunces',serif", fontSize:"22px", fontWeight:600, color:"#111", marginBottom:"12px" }}>Similar items</h3>
+              <h3 style={{ fontFamily:"'Fraunces',serif", fontSize:"22px", fontWeight:600, color:"#111", marginBottom:"12px" }}>{t("Similar items")}</h3>
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))", gap:"14px" }}>
                 {similar.map(renderCard)}
               </div>
@@ -989,24 +1026,24 @@ export default function App() {
             <div className="card" style={{ padding:"24px", boxShadow:"0 8px 32px rgba(0,0,0,0.08)" }}>
               <div style={{ display:"flex", alignItems:"baseline", gap:"4px", marginBottom:"4px" }}>
                 <span style={{ fontFamily:"'Fraunces',serif", fontSize:"40px", fontWeight:700, color:"#111" }}>₼{item.price}</span>
-                <span style={{ fontSize:"14px", color:"#9CA3AF" }}>/ day</span>
+                <span style={{ fontSize:"14px", color:"#9CA3AF" }}>{t("/ day")}</span>
               </div>
               <div style={{ display:"flex", alignItems:"center", gap:"4px", marginBottom:"18px" }}>
                 <Stars r={item.rating} />
-                <span style={{ fontSize:"13px", color:"#6B7280" }}>{item.rating} · {item.reviews} reviews</span>
+                <span style={{ fontSize:"13px", color:"#6B7280" }}>{item.rating} · {item.reviews} {t("reviews")}</span>
               </div>
 
               <div style={{ fontSize:"12px", fontWeight:600, color:"#374151", marginBottom:"8px", textTransform:"uppercase", letterSpacing:"0.5px", display:"flex", justifyContent:"space-between" }}>
-                <span>Your dates</span>
+                <span>{t("Your dates")}</span>
                 <span style={{ color: range.start ? "#16A34A" : "#9CA3AF", textTransform:"none", letterSpacing:0 }}>
-                  {range.start ? `${fmtRange(range.start, range.end||range.start)} · ${days} day${days>1?"s":""}` : "Tap a start date"}
+                  {range.start ? `${fmtRange(range.start, range.end||range.start)} · ${daysLabel(days)}` : t("Tap a start date")}
                 </span>
               </div>
               <RangeCalendar booked={item.bookedDates} range={range} onChange={setRange} />
-              {range.start && !range.end && <div style={{ fontSize:"12px", color:"#6B7280", marginTop:"8px" }}>Tap an end date, or book just this one day.</div>}
+              {range.start && !range.end && <div style={{ fontSize:"12px", color:"#6B7280", marginTop:"8px" }}>{t("Tap an end date, or book just this one day.")}</div>}
 
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px", margin:"14px 0" }}>
-                {[[false,"Pick up", item.metro ? `${item.metro} metro` : item.city],[true,"Delivery", `+₼${DELIVERY_FEE} to your door`]].map(([v,l,sub])=>(
+                {[[false,t("Pick up"), item.metro ? t("{m} metro", { m:item.metro }) : t(item.city)],[true,t("Delivery"), t("+₼{n} to your door", { n:DELIVERY_FEE })]].map(([v,l,sub])=>(
                   <button key={l} type="button" onClick={()=>setDelivery(v)} aria-pressed={delivery===v}
                     style={{ textAlign:"left", padding:"10px 12px", borderRadius:"12px", border:`1.5px solid ${delivery===v?"#16A34A":"#E5E7EB"}`, background: delivery===v?"#F0FDF4":"#fff", cursor:"pointer", fontFamily:"'DM Sans',sans-serif" }}>
                     <div style={{ fontSize:"13px", fontWeight:600, color:"#111" }}>{l}</div>
@@ -1018,11 +1055,11 @@ export default function App() {
               {/* Price breakdown */}
               <div style={{ background:"#F8F7F4", borderRadius:"12px", padding:"16px", marginBottom:"16px", fontVariantNumeric:"tabular-nums" }}>
                 {[
-                  [`₼${item.price} × ${days} day${days>1?"s":""}`, `₼${qt.base}`],
-                  ...(qt.discount ? [[`${days>=7?"Weekly":"3+ day"} discount (${discountRate(days)*100}%)`, `−₼${qt.discount}`, true]] : []),
-                  ["Service fee (10%)", `₼${qt.fee}`],
-                  ...(qt.insurance ? [["Protection fee", `₼${qt.insurance}`]] : []),
-                  ...(delivery ? [["Delivery", `₼${qt.deliveryFee}`]] : []),
+                  [`₼${item.price} × ${daysLabel(days)}`, `₼${qt.base}`],
+                  ...(qt.discount ? [[t(days>=7 ? "Weekly discount ({p}%)" : "3+ day discount ({p}%)", { p:discountRate(days)*100 }), `−₼${qt.discount}`, true]] : []),
+                  [t("Service fee (10%)"), `₼${qt.fee}`],
+                  ...(qt.insurance ? [[t("Protection fee"), `₼${qt.insurance}`]] : []),
+                  ...(delivery ? [[t("Delivery"), `₼${qt.deliveryFee}`]] : []),
                 ].map(([l,v,green])=>(
                   <div key={l} style={{ display:"flex", justifyContent:"space-between", fontSize:"13px", color: green?"#16A34A":"#374151", marginBottom:"8px", fontWeight: green?600:400 }}>
                     <span>{l}</span><span style={{ fontWeight:500 }}>{v}</span>
@@ -1030,24 +1067,24 @@ export default function App() {
                 ))}
                 <div style={{ height:"1px", background:"#E5E7EB", margin:"12px 0" }} />
                 <div style={{ display:"flex", justifyContent:"space-between", fontSize:"15px", fontWeight:700, color:"#111" }}>
-                  <span>Due now</span>
+                  <span>{t("Due now")}</span>
                   <span>₼{qt.total}</span>
                 </div>
-                {item.deposit > 0 && <div style={{ fontSize:"11px", color:"#9CA3AF", marginTop:"4px", textAlign:"right" }}>+ ₼{item.deposit} deposit, held and returned after a safe return</div>}
-                {!qt.discount && <div style={{ fontSize:"11px", color:"#16A34A", marginTop:"6px" }}>Book 3+ days for 10% off, or a week for 20% off.</div>}
+                {item.deposit > 0 && <div style={{ fontSize:"11px", color:"#9CA3AF", marginTop:"4px", textAlign:"right" }}>{t("+ ₼{n} deposit, held and returned after a safe return", { n:item.deposit })}</div>}
+                {!qt.discount && <div style={{ fontSize:"11px", color:"#16A34A", marginTop:"6px" }}>{t("Book 3+ days for 10% off, or a week for 20% off.")}</div>}
               </div>
 
               <button className="btn btn-green btn-lg btn-full" onClick={handleBook} style={{ marginBottom:"10px" }}>
-                {!user ? "Sign up to book" : !user.verified ? "Verify ID to book" : range.start ? `Book ${days} day${days>1?"s":""} · ₼${qt.total}` : "Pick dates to book"}
+                {!user ? t("Sign up to book") : !user.verified ? t("Verify ID to book") : range.start ? t("Book {d} · ₼{total}", { d:daysLabel(days), total:qt.total }) : t("Pick dates to book")}
               </button>
 
               {!user?.verified && user && (
                 <div style={{ background:"#FEF3C7", border:"1px solid #FDE68A", borderRadius:"10px", padding:"10px 14px", fontSize:"12px", color:"#92400E", marginBottom:"10px" }}>
-                  ⚠️ Identity verification required before booking. Takes 60 seconds.
+                  {t("⚠️ Identity verification required before booking. Takes 60 seconds.")}
                 </div>
               )}
 
-              <div style={{ textAlign:"center", fontSize:"12px", color:"#9CA3AF" }}>Free cancellation up to 24h before · Secure payment</div>
+              <div style={{ textAlign:"center", fontSize:"12px", color:"#9CA3AF" }}>{t("Free cancellation up to 24h before · Secure payment")}</div>
             </div>
           </div>
         </div>
@@ -1064,13 +1101,13 @@ export default function App() {
       <div style={{ maxWidth:"560px", margin:"0 auto", padding:"100px 24px 60px" }}>
         <div style={{ textAlign:"center", marginBottom:"40px" }}>
           <div style={{ width:"64px", height:"64px", borderRadius:"20px", background:"#F0FDF4", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 16px", fontSize:"28px" }}>🛡</div>
-          <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"8px" }}>Verify your identity</h2>
-          <p style={{ fontSize:"15px", color:"#6B7280", lineHeight:1.7 }}>One-time check. Keeps everyone safe.</p>
+          <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"8px" }}>{t("Verify your identity")}</h2>
+          <p style={{ fontSize:"15px", color:"#6B7280", lineHeight:1.7 }}>{t("One-time check. Keeps everyone safe.")}</p>
         </div>
 
         {/* Progress */}
         <div style={{ display:"flex", gap:"4px", marginBottom:"36px" }}>
-          {["ID Document","Selfie","Complete"].map((s,i)=>(
+          {[t("ID Document"),t("Selfie"),t("Complete")].map((s,i)=>(
             <div key={i} style={{ flex:1, textAlign:"center" }}>
               <div style={{ height:"4px", borderRadius:"100px", background: i<=verifyStep?"#16A34A":"#E5E7EB", marginBottom:"6px", transition:"background 0.3s" }} />
               <div style={{ fontSize:"11px", color: i<=verifyStep?"#16A34A":"#9CA3AF", fontWeight: i===verifyStep?600:400 }}>{s}</div>
@@ -1082,9 +1119,9 @@ export default function App() {
           <div style={{ animation:"fadeUp 0.4s ease" }}>
             <div className="verify-box" onClick={()=>setVerifyStep(1)}>
               <div style={{ fontSize:"48px", marginBottom:"16px" }}>🪪</div>
-              <div style={{ fontFamily:"'Fraunces',serif", fontSize:"20px", fontWeight:600, color:"#111", marginBottom:"8px" }}>Upload your ID</div>
-              <div style={{ fontSize:"13px", color:"#6B7280", lineHeight:1.7 }}>Passport, national ID, or driving license. Your data is encrypted and never shared.</div>
-              <div className="btn btn-dark" style={{ marginTop:"20px", display:"inline-flex" }}>Choose file →</div>
+              <div style={{ fontFamily:"'Fraunces',serif", fontSize:"20px", fontWeight:600, color:"#111", marginBottom:"8px" }}>{t("Upload your ID")}</div>
+              <div style={{ fontSize:"13px", color:"#6B7280", lineHeight:1.7 }}>{t("Passport, national ID, or driving license. Your data is encrypted and never shared.")}</div>
+              <div className="btn btn-dark" style={{ marginTop:"20px", display:"inline-flex" }}>{t("Choose file →")}</div>
             </div>
           </div>
         )}
@@ -1093,13 +1130,13 @@ export default function App() {
           <div style={{ animation:"fadeUp 0.4s ease" }}>
             <div className="verify-box done" style={{ marginBottom:"16px" }}>
               <div style={{ fontSize:"32px", marginBottom:"8px" }}>✅</div>
-              <div style={{ fontWeight:600, color:"#16A34A" }}>ID uploaded</div>
+              <div style={{ fontWeight:600, color:"#16A34A" }}>{t("ID uploaded")}</div>
             </div>
             <div className="verify-box" onClick={()=>setVerifyStep(2)}>
               <div style={{ fontSize:"48px", marginBottom:"16px" }}>🤳</div>
-              <div style={{ fontFamily:"'Fraunces',serif", fontSize:"20px", fontWeight:600, color:"#111", marginBottom:"8px" }}>Take a selfie</div>
-              <div style={{ fontSize:"13px", color:"#6B7280" }}>We'll match it to your ID automatically. Takes 10 seconds.</div>
-              <div className="btn btn-dark" style={{ marginTop:"20px", display:"inline-flex" }}>Open camera →</div>
+              <div style={{ fontFamily:"'Fraunces',serif", fontSize:"20px", fontWeight:600, color:"#111", marginBottom:"8px" }}>{t("Take a selfie")}</div>
+              <div style={{ fontSize:"13px", color:"#6B7280" }}>{t("We'll match it to your ID automatically. Takes 10 seconds.")}</div>
+              <div className="btn btn-dark" style={{ marginTop:"20px", display:"inline-flex" }}>{t("Open camera →")}</div>
             </div>
           </div>
         )}
@@ -1107,23 +1144,23 @@ export default function App() {
         {verifyStep === 2 && (
           <div style={{ animation:"fadeUp 0.4s ease", textAlign:"center" }}>
             <div style={{ width:"80px", height:"80px", border:"4px solid #F0EFEC", borderTop:"4px solid #16A34A", borderRadius:"50%", margin:"0 auto 24px", animation:"spin 1s linear infinite" }} />
-            <div style={{ fontFamily:"'Fraunces',serif", fontSize:"24px", fontWeight:600, color:"#111", marginBottom:"8px" }}>Verifying...</div>
-            <div style={{ fontSize:"14px", color:"#6B7280", marginBottom:"32px" }}>Checking your documents</div>
+            <div style={{ fontFamily:"'Fraunces',serif", fontSize:"24px", fontWeight:600, color:"#111", marginBottom:"8px" }}>{t("Verifying...")}</div>
+            <div style={{ fontSize:"14px", color:"#6B7280", marginBottom:"32px" }}>{t("Checking your documents")}</div>
             <button className="btn btn-green btn-lg btn-full" onClick={handleVerifyDone}>
-              Verification complete ✓
+              {t("Verification complete ✓")}
             </button>
           </div>
         )}
 
         <div style={{ marginTop:"24px", background:"#F8F7F4", borderRadius:"14px", padding:"16px", fontSize:"13px", color:"#6B7280", lineHeight:1.7 }}>
-          🔒 <strong style={{ color:"#111" }}>Your privacy is protected.</strong> Your documents are encrypted and only used to confirm who you are.</div>
+          🔒 <strong style={{ color:"#111" }}>{t("Your privacy is protected.")}</strong> {t("Your documents are encrypted and only used to confirm who you are.")}</div>
       </div>
     </div>
   );
 
   // ── BOOKED ────────────────────────────────────────────────────────────────
   if (screen === "booked" && booking) {
-    const b = booking;
+    const b = { ...booking, item:localize(booking.item) };
     const shots = pickupPhotos.filter(Boolean).length;
     return (
     <div style={{ minHeight:"100vh", background:BG }}><style>{css}</style>
@@ -1132,9 +1169,9 @@ export default function App() {
       <div style={{ maxWidth:"560px", margin:"0 auto", padding:"96px 16px 60px" }}>
         <div style={{ textAlign:"center" }}>
           <div style={{ width:"80px", height:"80px", borderRadius:"50%", background:"#DCFCE7", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 20px", fontSize:"36px", color:"#16A34A", animation:"pop 0.5s cubic-bezier(0.34,1.56,0.64,1)" }}>✓</div>
-          <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(30px,6vw,40px)", fontWeight:700, color:"#111", marginBottom:"10px" }}>Booking confirmed!</h2>
+          <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(30px,6vw,40px)", fontWeight:700, color:"#111", marginBottom:"10px" }}>{t("Booking confirmed!")}</h2>
           <p style={{ fontSize:"16px", color:"#6B7280" }}>
-            <strong style={{ color:"#111" }}>{b.item.owner}</strong> will confirm within 2 hours and message you {b.delivery ? "a delivery time" : "the exact pickup spot"}.
+            <strong style={{ color:"#111" }}>{b.item.owner}</strong> {t("will confirm within 2 hours and message you {x}.", { x:t(b.delivery ? "a delivery time" : "the exact pickup spot") })}
           </p>
         </div>
 
@@ -1142,12 +1179,12 @@ export default function App() {
           <ItemPhoto item={b.item} height="140px" />
           <div style={{ padding:"8px 20px 12px", fontVariantNumeric:"tabular-nums" }}>
             {[
-              ["Item", b.item.title],
-              ["Dates", `${fmtRange(b.start, b.end)} · ${b.days} day${b.days>1?"s":""}`],
-              ["Handover", b.delivery ? "Delivered to your door" : b.item.metro ? `Pickup near ${b.item.metro} metro` : `Pickup in ${b.item.city}`],
-              ...(b.discount ? [["Discount", `−₼${b.discount}`]] : []),
-              ["Total paid", `₼${b.total}`],
-              ["Deposit held", b.item.deposit ? `₼${b.item.deposit}, returned after a safe return` : "None"],
+              [t("Item"), b.item.title],
+              [t("Dates"), `${fmtRange(b.start, b.end)} · ${daysLabel(b.days)}`],
+              [t("Handover"), b.delivery ? t("Delivered to your door") : b.item.metro ? t("Pickup near {m} metro", { m:b.item.metro }) : t("Pickup in {city}", { city:t(b.item.city) })],
+              ...(b.discount ? [[t("Discount"), `−₼${b.discount}`]] : []),
+              [t("Total paid"), `₼${b.total}`],
+              [t("Deposit held"), b.item.deposit ? t("₼{n}, returned after a safe return", { n:b.item.deposit }) : t("None")],
             ].map(([l,v])=>(
               <div key={l} style={{ display:"flex", justifyContent:"space-between", gap:"16px", fontSize:"14px", padding:"9px 0", borderBottom:"1px solid #F3F2EF" }}>
                 <span style={{ color:"#9CA3AF", flexShrink:0 }}>{l}</span>
@@ -1160,27 +1197,27 @@ export default function App() {
         {/* Pickup photo check */}
         <div className="card" style={{ padding:"20px", marginBottom:"24px" }}>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", gap:"8px", marginBottom:"6px" }}>
-            <div style={{ fontWeight:700, fontSize:"16px", color:"#111" }}>📸 Pickup photo check</div>
+            <div style={{ fontWeight:700, fontSize:"16px", color:"#111" }}>{t("📸 Pickup photo check")}</div>
             <div style={{ fontSize:"12px", fontWeight:600, color: shots===3?"#16A34A":"#9CA3AF" }}>{shots}/3</div>
           </div>
           <p style={{ fontSize:"13px", color:"#6B7280", lineHeight:1.6, marginBottom:"14px" }}>
-            When you get the item, take 3 photos of its condition. The owner sees them too, so nobody can blame you for damage that was already there.
+            {t("When you get the item, take 3 photos of its condition. The owner sees them too, so nobody can blame you for damage that was already there.")}
           </p>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"8px" }}>
-            {["Front","Back","Any marks"].map((label,i)=>(
+            {[t("Front"),t("Back"),t("Any marks")].map((label,i)=>(
               <label key={label} className="slot" style={pickupPhotos[i]?{ borderStyle:"solid", borderColor:"#16A34A" }:undefined}>
-                {pickupPhotos[i] ? <img src={pickupPhotos[i]} alt={`${label} photo`} /> : <><span style={{ fontSize:"22px" }}>＋</span>{label}</>}
-                <input type="file" accept="image/*" capture="environment" aria-label={`Add ${label} photo`}
+                {pickupPhotos[i] ? <img src={pickupPhotos[i]} alt={label} /> : <><span style={{ fontSize:"22px" }}>＋</span>{label}</>}
+                <input type="file" accept="image/*" capture="environment" aria-label={label}
                   onChange={e=>readPhoto(e.target.files?.[0], url=>setPickupPhotos(ps=>ps.map((p,j)=>j===i?url:p)))} />
               </label>
             ))}
           </div>
-          {shots===3 && <div style={{ marginTop:"12px", background:"#F0FDF4", borderRadius:"10px", padding:"10px 12px", fontSize:"12px", color:"#166534" }}>✓ Condition recorded and shared with {b.item.owner}.</div>}
+          {shots===3 && <div style={{ marginTop:"12px", background:"#F0FDF4", borderRadius:"10px", padding:"10px 12px", fontSize:"12px", color:"#166534" }}>{t("✓ Condition recorded and shared with {o}.", { o:b.item.owner })}</div>}
         </div>
 
         <div style={{ display:"flex", flexDirection:"column", gap:"10px" }}>
-          <button className="btn btn-green btn-lg btn-full" onClick={()=>go("browse")}>Browse more items</button>
-          <button className="btn btn-outline btn-lg btn-full" onClick={()=>{ setDashTab("bookings"); go("dashboard"); }}>View my bookings</button>
+          <button className="btn btn-green btn-lg btn-full" onClick={()=>go("browse")}>{t("Browse more items")}</button>
+          <button className="btn btn-outline btn-lg btn-full" onClick={()=>{ setDashTab("bookings"); go("dashboard"); }}>{t("View my bookings")}</button>
         </div>
       </div>
     </div>
@@ -1198,8 +1235,8 @@ export default function App() {
           <div style={{ background:"#FEF3C7", border:"1px solid #FDE68A", borderRadius:"16px", padding:"16px 20px", marginBottom:"24px", display:"flex", alignItems:"center", gap:"12px" }}>
             <span style={{ fontSize:"20px" }}>⚠️</span>
             <div style={{ fontSize:"14px", color:"#92400E" }}>
-              <strong>Sign up first</strong> to list an item. It only takes a minute.
-              <button onClick={()=>{ setAuthMode("signup"); setShowAuth(true); }} style={{ background:"none", border:"none", color:"#D97706", fontWeight:700, cursor:"pointer", marginLeft:"8px", fontFamily:"'DM Sans',sans-serif", fontSize:"14px" }}>Sign up →</button>
+              <strong>{t("Sign up first")}</strong> {t("to list an item. It only takes a minute.")}
+              <button onClick={()=>{ setAuthMode("signup"); setShowAuth(true); }} style={{ background:"none", border:"none", color:"#D97706", fontWeight:700, cursor:"pointer", marginLeft:"8px", fontFamily:"'DM Sans',sans-serif", fontSize:"14px" }}>{t("Sign up →")}</button>
             </div>
           </div>
         )}
@@ -1207,7 +1244,7 @@ export default function App() {
         {listStep < 4 ? (
           <>
             <div style={{ display:"flex", gap:"4px", marginBottom:"36px" }}>
-              {["Details","Description","Pricing","Review"].map((s,i)=>(
+              {[t("Details"),t("Description"),t("Pricing"),t("Review")].map((s,i)=>(
                 <div key={i} style={{ flex:1 }}>
                   <div style={{ height:"4px", borderRadius:"100px", background: i<=listStep?"#16A34A":"#E5E7EB", marginBottom:"5px", transition:"background 0.3s" }} />
                   <div style={{ fontSize:"10px", color: i<=listStep?"#16A34A":"#9CA3AF", fontWeight: i===listStep?600:400, textAlign:"center" }}>{s}</div>
@@ -1217,43 +1254,43 @@ export default function App() {
 
             {listStep === 0 && (
               <div style={{ animation:"fadeUp 0.4s ease" }}>
-                <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"6px" }}>What are you listing?</h2>
-                <p style={{ fontSize:"15px", color:"#6B7280", marginBottom:"28px" }}>Give it a name that makes it easy to find.</p>
+                <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"6px" }}>{t("What are you listing?")}</h2>
+                <p style={{ fontSize:"15px", color:"#6B7280", marginBottom:"28px" }}>{t("Give it a name that makes it easy to find.")}</p>
                 <div style={{ display:"flex", flexDirection:"column", gap:"14px" }}>
                   <div>
-                    <label style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>Item name *</label>
-                    <input className="inp" placeholder="e.g. Sony A7III Camera with 50mm lens" value={listForm.title} onChange={e=>setListForm(f=>({...f,title:e.target.value}))} />
+                    <label style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>{t("Item name *")}</label>
+                    <input className="inp" placeholder={t("e.g. Sony A7III Camera with 50mm lens")} value={listForm.title} onChange={e=>setListForm(f=>({...f,title:e.target.value}))} />
                   </div>
                   <div>
-                    <label style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>Category *</label>
+                    <label style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>{t("Category *")}</label>
                     <select className="inp" value={listForm.cat} onChange={e=>setListForm(f=>({...f,cat:e.target.value}))}>
-                      {CATS.filter(c=>c.id!=="all").map(c=><option key={c.id} value={c.id}>{c.icon} {c.label}</option>)}
+                      {CATS.filter(c=>c.id!=="all").map(c=><option key={c.id} value={c.id}>{c.icon} {t(c.label)}</option>)}
                     </select>
                   </div>
                   <div>
-                    <label htmlFor="l-city" style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>City *</label>
+                    <label htmlFor="l-city" style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>{t("City *")}</label>
                     <select id="l-city" className="inp" value={listForm.city} onChange={e=>setListForm(f=>({...f,city:e.target.value}))}>
-                      {["Baku","Sumqayit","Ganja","Lankaran","Mingachevir","Shaki","Quba"].map(c=><option key={c}>{c}</option>)}
+                      {["Baku","Sumqayit","Ganja","Lankaran","Mingachevir","Shaki","Quba"].map(c=><option key={c} value={c}>{t(c)}</option>)}
                     </select>
                   </div>
                   {listForm.city === "Baku" && (
                     <div>
-                      <label htmlFor="l-metro" style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>Nearest metro station for pickup</label>
+                      <label htmlFor="l-metro" style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>{t("Nearest metro station for pickup")}</label>
                       <select id="l-metro" className="inp" value={listForm.metro} onChange={e=>setListForm(f=>({...f,metro:e.target.value}))}>
                         {METRO.map(m=><option key={m}>{m}</option>)}
                       </select>
-                      <div style={{ fontSize:"12px", color:"#9CA3AF", marginTop:"6px" }}>Renters filter by metro. Listings with a station get more bookings.</div>
+                      <div style={{ fontSize:"12px", color:"#9CA3AF", marginTop:"6px" }}>{t("Renters filter by metro. Listings with a station get more bookings.")}</div>
                     </div>
                   )}
                   <div>
-                    <div style={{ fontSize:"13px", fontWeight:600, color:"#374151", marginBottom:"8px" }}>Photo</div>
+                    <div style={{ fontSize:"13px", fontWeight:600, color:"#374151", marginBottom:"8px" }}>{t("Photo")}</div>
                     <label className="slot" style={{ aspectRatio:"16/9", ...(listForm.photo?{ borderStyle:"solid", borderColor:"#16A34A" }:{}) }}>
                       {listForm.photo
-                        ? <img src={listForm.photo} alt="Your item" />
-                        : <><span style={{ fontSize:"28px" }}>📷</span><strong style={{ color:"#111" }}>Add a photo of your item</strong><span>Real photos help renters trust your listing</span></>}
-                      <input type="file" accept="image/*" aria-label="Add a photo of your item" onChange={e=>readPhoto(e.target.files?.[0], url=>setListForm(f=>({...f,photo:url})))} />
+                        ? <img src={listForm.photo} alt={t("Your item")} />
+                        : <><span style={{ fontSize:"28px" }}>📷</span><strong style={{ color:"#111" }}>{t("Add a photo of your item")}</strong><span>{t("Real photos help renters trust your listing")}</span></>}
+                      <input type="file" accept="image/*" aria-label={t("Add a photo of your item")} onChange={e=>readPhoto(e.target.files?.[0], url=>setListForm(f=>({...f,photo:url})))} />
                     </label>
-                    {listForm.photo && <button className="btn btn-ghost" style={{ marginTop:"6px", fontSize:"12px", padding:"6px 10px" }} onClick={()=>setListForm(f=>({...f,photo:null}))}>Remove photo</button>}
+                    {listForm.photo && <button className="btn btn-ghost" style={{ marginTop:"6px", fontSize:"12px", padding:"6px 10px" }} onClick={()=>setListForm(f=>({...f,photo:null}))}>{t("Remove photo")}</button>}
                   </div>
                 </div>
               </div>
@@ -1261,16 +1298,16 @@ export default function App() {
 
             {listStep === 1 && (
               <div style={{ animation:"fadeUp 0.4s ease" }}>
-                <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"6px" }}>Describe your item</h2>
-                <p style={{ fontSize:"15px", color:"#6B7280", marginBottom:"28px" }}>A clear description helps renters choose your item.</p>
+                <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"6px" }}>{t("Describe your item")}</h2>
+                <p style={{ fontSize:"15px", color:"#6B7280", marginBottom:"28px" }}>{t("A clear description helps renters choose your item.")}</p>
                 <div style={{ display:"flex", flexDirection:"column", gap:"14px" }}>
                   <div>
-                    <label style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>Description</label>
-                    <textarea className="inp" rows={5} placeholder="Condition, what's included, any important details..." value={listForm.desc} onChange={e=>setListForm(f=>({...f,desc:e.target.value}))} />
+                    <label style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>{t("Description")}</label>
+                    <textarea className="inp" rows={5} placeholder={t("Condition, what's included, any important details...")} value={listForm.desc} onChange={e=>setListForm(f=>({...f,desc:e.target.value}))} />
                   </div>
                   <div>
-                    <label style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>Rental rules (one per line)</label>
-                    <textarea className="inp" rows={3} placeholder={"Return fully charged\nNo commercial use\nClean before returning"} value={listForm.rules} onChange={e=>setListForm(f=>({...f,rules:e.target.value}))} />
+                    <label style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>{t("Rental rules (one per line)")}</label>
+                    <textarea className="inp" rows={3} placeholder={t("Return fully charged\nNo commercial use\nClean before returning")} value={listForm.rules} onChange={e=>setListForm(f=>({...f,rules:e.target.value}))} />
                   </div>
                 </div>
               </div>
@@ -1278,11 +1315,11 @@ export default function App() {
 
             {listStep === 2 && (
               <div style={{ animation:"fadeUp 0.4s ease" }}>
-                <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"6px" }}>Set your price</h2>
-                <p style={{ fontSize:"15px", color:"#6B7280", marginBottom:"28px" }}>You keep 90%. We take 10% to cover insurance and platform costs.</p>
+                <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"6px" }}>{t("Set your price")}</h2>
+                <p style={{ fontSize:"15px", color:"#6B7280", marginBottom:"28px" }}>{t("You keep 90%. We take 10% to cover insurance and platform costs.")}</p>
                 <div style={{ display:"flex", flexDirection:"column", gap:"14px" }}>
                   <div>
-                    <label htmlFor="l-retail" style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>What would it cost to buy new? (₼)</label>
+                    <label htmlFor="l-retail" style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>{t("What would it cost to buy new? (₼)")}</label>
                     <div style={{ position:"relative" }}>
                       <div style={{ position:"absolute", left:"16px", top:"50%", transform:"translateY(-50%)", fontFamily:"'Fraunces',serif", fontSize:"20px", color:"#6B7280", pointerEvents:"none" }}>₼</div>
                       <input id="l-retail" className="inp" style={{ paddingLeft:"34px", fontSize:"20px", fontFamily:"'Fraunces',serif" }} placeholder="0" type="number" min="0" value={listForm.retail} onChange={e=>setListForm(f=>({...f,retail:e.target.value}))} />
@@ -1293,37 +1330,37 @@ export default function App() {
                       return (
                         <div style={{ marginTop:"10px", background:"#111", color:"#fff", borderRadius:"14px", padding:"14px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"12px", flexWrap:"wrap" }}>
                           <div style={{ fontSize:"13px", lineHeight:1.5 }}>
-                            <div style={{ fontWeight:600 }}>Suggested: ₼{sug}/day, ₼{dep} deposit</div>
-                            <div style={{ color:"rgba(255,255,255,0.55)", fontSize:"12px" }}>A common starting point is about 3% of the item's price per day.</div>
+                            <div style={{ fontWeight:600 }}>{t("Suggested: ₼{s}/day, ₼{d} deposit", { s:sug, d:dep })}</div>
+                            <div style={{ color:"rgba(255,255,255,0.55)", fontSize:"12px" }}>{t("A common starting point is about 3% of the item's price per day.")}</div>
                           </div>
-                          <button className="btn btn-green" onClick={()=>setListForm(f=>({...f,price:String(sug),deposit:String(dep)}))}>Use these</button>
+                          <button className="btn btn-green" onClick={()=>setListForm(f=>({...f,price:String(sug),deposit:String(dep)}))}>{t("Use these")}</button>
                         </div>
                       );
                     })()}
                   </div>
                   <div>
-                    <label style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>Daily price (₼) *</label>
+                    <label style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>{t("Daily price (₼) *")}</label>
                     <div style={{ position:"relative" }}>
                       <div style={{ position:"absolute", left:"16px", top:"50%", transform:"translateY(-50%)", fontFamily:"'Fraunces',serif", fontSize:"20px", color:"#6B7280", pointerEvents:"none" }}>₼</div>
                       <input className="inp" style={{ paddingLeft:"34px", fontSize:"20px", fontFamily:"'Fraunces',serif" }} placeholder="0" type="number" value={listForm.price} onChange={e=>setListForm(f=>({...f,price:e.target.value}))} />
                     </div>
                   </div>
                   <div>
-                    <label style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>Security deposit (₼) — optional</label>
+                    <label style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>{t("Security deposit (₼) — optional")}</label>
                     <div style={{ position:"relative" }}>
                       <div style={{ position:"absolute", left:"16px", top:"50%", transform:"translateY(-50%)", fontFamily:"'Fraunces',serif", fontSize:"20px", color:"#6B7280", pointerEvents:"none" }}>₼</div>
                       <input className="inp" style={{ paddingLeft:"34px", fontSize:"20px", fontFamily:"'Fraunces',serif" }} placeholder="0" type="number" value={listForm.deposit} onChange={e=>setListForm(f=>({...f,deposit:e.target.value}))} />
                     </div>
-                    <div style={{ fontSize:"12px", color:"#9CA3AF", marginTop:"6px" }}>Held during the rental and returned when the item comes back safely.</div>
+                    <div style={{ fontSize:"12px", color:"#9CA3AF", marginTop:"6px" }}>{t("Held during the rental and returned when the item comes back safely.")}</div>
                   </div>
 
                   {listForm.price && (
                     <div style={{ background:"#DCFCE7", borderRadius:"14px", padding:"18px" }}>
-                      <div style={{ fontSize:"13px", color:"#166534", fontWeight:600, marginBottom:"8px" }}>💰 Your earnings breakdown</div>
+                      <div style={{ fontSize:"13px", color:"#166534", fontWeight:600, marginBottom:"8px" }}>{t("💰 Your earnings breakdown")}</div>
                       {[
-                        [`Per rental (1 day)`, `₼${Math.round(parseInt(listForm.price)*0.9)}`],
-                        [`Per week`, `₼${Math.round(parseInt(listForm.price)*0.9*7)}`],
-                        [`Per month (fully booked)`, `₼${Math.round(parseInt(listForm.price)*0.9*30)}`],
+                        [t("Per rental (1 day)"), `₼${Math.round(parseInt(listForm.price)*0.9)}`],
+                        [t("Per week"), `₼${Math.round(parseInt(listForm.price)*0.9*7)}`],
+                        [t("Per month (fully booked)"), `₼${Math.round(parseInt(listForm.price)*0.9*30)}`],
                       ].map(([l,v])=>(
                         <div key={l} style={{ display:"flex", justifyContent:"space-between", fontSize:"13px", color:"#166534", marginBottom:"4px" }}>
                           <span>{l}</span><strong>{v}</strong>
@@ -1337,18 +1374,18 @@ export default function App() {
 
             {listStep === 3 && (
               <div style={{ animation:"fadeUp 0.4s ease" }}>
-                <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"6px" }}>Review your listing</h2>
-                <p style={{ fontSize:"15px", color:"#6B7280", marginBottom:"28px" }}>Looks good? Hit publish.</p>
+                <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"6px" }}>{t("Review your listing")}</h2>
+                <p style={{ fontSize:"15px", color:"#6B7280", marginBottom:"28px" }}>{t("Looks good? Hit publish.")}</p>
                 <div className="card" style={{ padding:"24px", marginBottom:"20px" }}>
                   <div style={{ marginBottom:"16px" }}>
                     <ItemPhoto item={{ title:listForm.title, photo:listForm.photo, color:"#1A1A2E", emoji:CATS.find(c=>c.id===listForm.cat)?.icon || "📦" }} height="180px" radius="14px" />
                   </div>
                   {[
-                    ["Title", listForm.title || "—"],
-                    ["Category", CATS.find(c=>c.id===listForm.cat)?.label],
-                    ["Pickup", listForm.city === "Baku" ? `${listForm.metro} metro, Baku` : listForm.city],
-                    ["Daily price", listForm.price ? `₼${listForm.price}` : "—"],
-                    ["Deposit", listForm.deposit ? `₼${listForm.deposit}` : "None"],
+                    [t("Title"), listForm.title || "—"],
+                    [t("Category"), t(CATS.find(c=>c.id===listForm.cat)?.label || "")],
+                    [t("Pickup"), listForm.city === "Baku" ? t("{m} metro, Baku", { m:listForm.metro }) : t(listForm.city)],
+                    [t("Daily price"), listForm.price ? `₼${listForm.price}` : "—"],
+                    [t("Deposit"), listForm.deposit ? `₼${listForm.deposit}` : t("None")],
                   ].map(([l,v])=>(
                     <div key={l} style={{ display:"flex", justifyContent:"space-between", fontSize:"14px", padding:"8px 0", borderBottom:"1px solid #F8F7F4" }}>
                       <span style={{ color:"#9CA3AF" }}>{l}</span>
@@ -1357,32 +1394,32 @@ export default function App() {
                   ))}
                 </div>
                 <div style={{ background:"#F0FDF4", border:"1px solid #BBF7D0", borderRadius:"14px", padding:"14px 16px", fontSize:"13px", color:"#166534" }}>
-                  ✓ Renters pay a deposit and photograph your item at pickup, so you have a record of its condition.
+                  {t("✓ Renters pay a deposit and photograph your item at pickup, so you have a record of its condition.")}
                 </div>
               </div>
             )}
 
             <div style={{ display:"flex", gap:"10px", marginTop:"28px" }}>
-              {listStep > 0 && <button className="btn btn-outline btn-lg" style={{ flex:1 }} onClick={()=>setListStep(s=>s-1)}>← Back</button>}
+              {listStep > 0 && <button className="btn btn-outline btn-lg" style={{ flex:1 }} onClick={()=>setListStep(s=>s-1)}>{t("← Back")}</button>}
               <button
                 className="btn btn-green btn-lg"
                 style={{ flex:2 }}
                 onClick={()=>{ listStep < 3 ? setListStep(s=>s+1) : submitListing(); }}
                 disabled={listStep===0&&!listForm.title}
               >
-                {listStep < 3 ? "Continue →" : "Publish listing 🎉"}
+                {listStep < 3 ? t("Continue →") : t("Publish listing 🎉")}
               </button>
             </div>
           </>
         ) : (
           <div style={{ textAlign:"center", animation:"fadeUp 0.5s ease" }}>
             <div style={{ width:"80px", height:"80px", borderRadius:"50%", background:"#DCFCE7", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 20px", fontSize:"36px", animation:"pop 0.5s cubic-bezier(0.34,1.56,0.64,1)" }}>🎉</div>
-            <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"36px", fontWeight:700, color:"#111", marginBottom:"8px" }}>You're live!</h2>
-            <p style={{ fontSize:"16px", color:"#6B7280", marginBottom:"6px" }}><strong style={{ color:"#111" }}>{listForm.title}</strong> is now visible to renters.</p>
-            <p style={{ fontSize:"14px", color:"#9CA3AF", marginBottom:"32px" }}>You'll get notified when someone books.</p>
+            <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"36px", fontWeight:700, color:"#111", marginBottom:"8px" }}>{t("You're live!")}</h2>
+            <p style={{ fontSize:"16px", color:"#6B7280", marginBottom:"6px" }}><strong style={{ color:"#111" }}>{listForm.title}</strong> {t("is now visible to renters.")}</p>
+            <p style={{ fontSize:"14px", color:"#9CA3AF", marginBottom:"32px" }}>{t("You'll get notified when someone books.")}</p>
             <div style={{ display:"flex", flexDirection:"column", gap:"10px" }}>
-              <button className="btn btn-green btn-lg btn-full" onClick={()=>{ setDashTab("listings"); setScreen("dashboard"); }}>Manage in dashboard</button>
-              <button className="btn btn-outline btn-lg btn-full" onClick={()=>{ setListStep(0); setListForm(EMPTY_LIST_FORM); }}>List another item</button>
+              <button className="btn btn-green btn-lg btn-full" onClick={()=>{ setDashTab("listings"); setScreen("dashboard"); }}>{t("Manage in dashboard")}</button>
+              <button className="btn btn-outline btn-lg btn-full" onClick={()=>{ setListStep(0); setListForm(EMPTY_LIST_FORM); }}>{t("List another item")}</button>
             </div>
           </div>
         )}
@@ -1403,21 +1440,21 @@ export default function App() {
             <Avatar name={user.name} size={44} bg="#16A34A" />
             <div>
               <div style={{ fontWeight:600, fontSize:"15px", color:"#111" }}>{user.name}</div>
-              <div style={{ fontSize:"12px", color:"#9CA3AF" }}>Member since {user.joined}</div>
+              <div style={{ fontSize:"12px", color:"#9CA3AF" }}>{t("Member since {y}", { y:user.joined })}</div>
               {!user.verified && (
                 <button onClick={()=>setScreen("verify")} style={{ background:"none", border:"none", color:"#F59E0B", fontSize:"11px", fontWeight:600, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", padding:0, marginTop:"2px" }}>
-                  ⚠️ Verify ID
+                  {t("⚠️ Verify ID")}
                 </button>
               )}
-              {user.verified && <div style={{ fontSize:"11px", color:"#16A34A", fontWeight:600 }}>✓ Verified</div>}
+              {user.verified && <div style={{ fontSize:"11px", color:"#16A34A", fontWeight:600 }}>{t("✓ Verified")}</div>}
             </div>
           </div>
           {[
-            { id:"overview",  icon:"◈", label:"Overview" },
-            { id:"bookings",  icon:"📅", label:"My Bookings" },
-            { id:"listings",  icon:"📦", label:"My Listings" },
-            { id:"earnings",  icon:"💰", label:"Earnings" },
-            { id:"settings",  icon:"⚙️", label:"Settings" },
+            { id:"overview",  icon:"◈", label:t("Overview") },
+            { id:"bookings",  icon:"📅", label:t("My Bookings") },
+            { id:"listings",  icon:"📦", label:t("My Listings") },
+            { id:"earnings",  icon:"💰", label:t("Earnings") },
+            { id:"settings",  icon:"⚙️", label:t("Settings") },
           ].map(item=>(
             <button key={item.id} className={`dash-nav-btn ${dashTab===item.id?"active":""}`} onClick={()=>setDashTab(item.id)}>
               <span>{item.icon}</span> {item.label}
@@ -1425,7 +1462,7 @@ export default function App() {
           ))}
           <div style={{ marginTop:"16px", paddingTop:"16px", borderTop:"1px solid #F0EFEC" }}>
             <button className="dash-nav-btn" onClick={()=>{ setUser(null); setScreen("home"); showNotif("Logged out"); }}>
-              <span>←</span> Log out
+              <span>←</span> {t("Log out")}
             </button>
           </div>
         </div>
@@ -1435,24 +1472,24 @@ export default function App() {
           {dashTab === "overview" && (
             <div style={{ animation:"fadeUp 0.3s ease" }}>
               <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"28px", fontWeight:700, color:"#111", marginBottom:"24px" }}>
-                Good morning, {user.name.split(" ")[0]} 👋
+                {t("Good morning, {n} 👋", { n:user.name.split(" ")[0] })}
               </h2>
 
               {!user.verified && (
                 <div style={{ background:"#FEF3C7", border:"1px solid #FDE68A", borderRadius:"16px", padding:"18px 20px", marginBottom:"20px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"16px" }}>
                   <div>
-                    <div style={{ fontWeight:600, color:"#92400E", marginBottom:"3px" }}>⚠️ Complete your verification</div>
-                    <div style={{ fontSize:"13px", color:"#B45309" }}>Verify your identity to start booking and renting. Takes 60 seconds.</div>
+                    <div style={{ fontWeight:600, color:"#92400E", marginBottom:"3px" }}>{t("⚠️ Complete your verification")}</div>
+                    <div style={{ fontSize:"13px", color:"#B45309" }}>{t("Verify your identity to start booking and renting. Takes 60 seconds.")}</div>
                   </div>
-                  <button className="btn btn-dark" onClick={()=>setScreen("verify")}>Verify now</button>
+                  <button className="btn btn-dark" onClick={()=>setScreen("verify")}>{t("Verify now")}</button>
                 </div>
               )}
 
               <div className="stack-mobile" style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"14px", marginBottom:"28px" }}>
                 {[
-                  { label:"Active bookings", value:"1", icon:"📅", color:"#EFF6FF" },
-                  { label:"Items listed", value:`${myListings.length}`, icon:"📦", color:"#F0FDF4" },
-                  { label:"Total earned", value:"₼117", icon:"💰", color:"#FEF3C7" },
+                  { label:t("Active bookings"), value:"1", icon:"📅", color:"#EFF6FF" },
+                  { label:t("Items listed"), value:`${myListings.length}`, icon:"📦", color:"#F0FDF4" },
+                  { label:t("Total earned"), value:"₼117", icon:"💰", color:"#FEF3C7" },
                 ].map(s=>(
                   <div key={s.label} className="card" style={{ padding:"20px", background:s.color, border:"none" }}>
                     <div style={{ fontSize:"24px", marginBottom:"8px" }}>{s.icon}</div>
@@ -1462,18 +1499,18 @@ export default function App() {
                 ))}
               </div>
 
-              <h3 style={{ fontFamily:"'Fraunces',serif", fontSize:"20px", fontWeight:600, color:"#111", marginBottom:"16px" }}>Recent activity</h3>
+              <h3 style={{ fontFamily:"'Fraunces',serif", fontSize:"20px", fontWeight:600, color:"#111", marginBottom:"16px" }}>{t("Recent activity")}</h3>
               <div className="card" style={{ padding:"20px" }}>
-                {OWNER_BOOKINGS.slice(0,3).map((b,i)=>(
+                {OWNER_BOOKINGS().slice(0,3).map((b,i)=>(
                   <div key={b.id} style={{ display:"flex", alignItems:"center", gap:"14px", padding:"12px 0", borderBottom: i<2?"1px solid #F8F7F4":"none" }}>
                     <Avatar name={b.avatar} size={38} bg={b.status==="active"?"#16A34A":b.status==="pending"?"#F59E0B":"#6B7280"} />
                     <div style={{ flex:1 }}>
-                      <div style={{ fontWeight:500, fontSize:"14px", color:"#111" }}>{b.renter} booked <em>{b.item}</em></div>
-                      <div style={{ fontSize:"12px", color:"#9CA3AF" }}>{b.date} · {b.days} day{b.days>1?"s":""}</div>
+                      <div style={{ fontWeight:500, fontSize:"14px", color:"#111" }}>{t("{r} booked", { r:b.renter })} <em>{t(b.item)}</em></div>
+                      <div style={{ fontSize:"12px", color:"#9CA3AF" }}>{b.date} · {daysLabel(b.days)}</div>
                     </div>
                     <div style={{ textAlign:"right" }}>
                       <div style={{ fontWeight:600, fontSize:"14px", color:"#111" }}>₼{b.total}</div>
-                      <Badge label={b.status} color={b.status==="active"?"#DCFCE7":b.status==="pending"?"#FEF3C7":"#F3F4F6"} text={b.status==="active"?"#16A34A":b.status==="pending"?"#D97706":"#6B7280"} />
+                      <Badge label={t(b.status)} color={b.status==="active"?"#DCFCE7":b.status==="pending"?"#FEF3C7":"#F3F4F6"} text={b.status==="active"?"#16A34A":b.status==="pending"?"#D97706":"#6B7280"} />
                     </div>
                   </div>
                 ))}
@@ -1483,26 +1520,26 @@ export default function App() {
 
           {dashTab === "bookings" && (
             <div style={{ animation:"fadeUp 0.3s ease" }}>
-              <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"28px", fontWeight:700, color:"#111", marginBottom:"24px" }}>My Bookings</h2>
+              <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"28px", fontWeight:700, color:"#111", marginBottom:"24px" }}>{t("My Bookings")}</h2>
               <div style={{ display:"flex", flexDirection:"column", gap:"12px" }}>
-                {bookingDone ? (
-                  <div className="card" style={{ padding:"20px", display:"flex", alignItems:"center", gap:"16px" }}>
-                    <span style={{ fontSize:"40px" }}>{selected?.emoji}</span>
-                    <div style={{ flex:1 }}>
-                      <div style={{ fontWeight:600, fontSize:"15px", color:"#111", marginBottom:"3px" }}>{selected?.title}</div>
-                      <div style={{ fontSize:"13px", color:"#9CA3AF" }}>by {selected?.owner} · {days} day{days>1?"s":""}</div>
+                {booking ? (
+                  <div className="card" style={{ padding:"16px 20px", display:"flex", alignItems:"center", gap:"16px" }}>
+                    <div style={{ width:"64px", flexShrink:0 }}><ItemPhoto item={booking.item} height="56px" radius="12px" emojiSize={26} /></div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontWeight:600, fontSize:"15px", color:"#111", marginBottom:"3px" }}>{localize(booking.item).title}</div>
+                      <div style={{ fontSize:"13px", color:"#9CA3AF" }}>{t("by {o}", { o:booking.item.owner })} · {fmtRange(booking.start, booking.end)} · {daysLabel(booking.days)}</div>
                     </div>
                     <div style={{ textAlign:"right" }}>
-                      <div style={{ fontWeight:700, color:"#111" }}>₼{selected ? selected.price*days+Math.round(selected.price*days*0.1)+5 : 0}</div>
-                      <Badge label="Active" color="#DCFCE7" text="#16A34A" />
+                      <div style={{ fontWeight:700, color:"#111" }}>₼{booking.total}</div>
+                      <Badge label={t("Active")} color="#DCFCE7" text="#16A34A" />
                     </div>
                   </div>
                 ) : (
                   <div style={{ textAlign:"center", padding:"60px 20px" }}>
                     <div style={{ fontSize:"40px", marginBottom:"14px" }}>📅</div>
-                    <div style={{ fontFamily:"'Fraunces',serif", fontSize:"22px", color:"#111", marginBottom:"8px" }}>No bookings yet</div>
-                    <div style={{ fontSize:"14px", color:"#9CA3AF", marginBottom:"20px" }}>Find something to rent nearby.</div>
-                    <button className="btn btn-green btn-lg" onClick={()=>setScreen("browse")}>Browse items</button>
+                    <div style={{ fontFamily:"'Fraunces',serif", fontSize:"22px", color:"#111", marginBottom:"8px" }}>{t("No bookings yet")}</div>
+                    <div style={{ fontSize:"14px", color:"#9CA3AF", marginBottom:"20px" }}>{t("Find something to rent nearby.")}</div>
+                    <button className="btn btn-green btn-lg" onClick={()=>setScreen("browse")}>{t("Browse items")}</button>
                   </div>
                 )}
               </div>
@@ -1512,8 +1549,8 @@ export default function App() {
           {dashTab === "listings" && (
             <div style={{ animation:"fadeUp 0.3s ease" }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"24px" }}>
-                <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"28px", fontWeight:700, color:"#111" }}>My Listings</h2>
-                <button className="btn btn-green" onClick={()=>setScreen("list")}>+ Add item</button>
+                <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"28px", fontWeight:700, color:"#111" }}>{t("My Listings")}</h2>
+                <button className="btn btn-green" onClick={()=>setScreen("list")}>{t("+ Add item")}</button>
               </div>
               <div style={{ display:"flex", flexDirection:"column", gap:"12px" }}>
                 {myListings.map(item=>(
@@ -1521,13 +1558,13 @@ export default function App() {
                     <div style={{ width:"64px", flexShrink:0 }}><ItemPhoto item={item} height="56px" radius="12px" emojiSize={26} /></div>
                     <div style={{ flex:1 }}>
                       <div style={{ fontWeight:600, fontSize:"15px", color:"#111", marginBottom:"3px" }}>{item.title}</div>
-                      <div style={{ fontSize:"12px", color:"#9CA3AF", display:"flex", gap:"6px", flexWrap:"wrap", alignItems:"center" }}><MetroTag station={item.metro} city={item.city} /> · ₼{item.price}/day · {item.reviews} reviews</div>
+                      <div style={{ fontSize:"12px", color:"#9CA3AF", display:"flex", gap:"6px", flexWrap:"wrap", alignItems:"center" }}><MetroTag station={item.metro} city={item.city} /> · ₼{item.price}{t("/day ·")} {item.reviews} {t("reviews")}</div>
                     </div>
                     <div style={{ textAlign:"right", display:"flex", flexDirection:"column", gap:"6px", alignItems:"flex-end" }}>
                       <Badge label={item.availability} color="#DCFCE7" text="#16A34A" />
                       <div style={{ display:"flex", gap:"6px" }}>
-                        <button className="btn btn-ghost" style={{ padding:"4px 10px", fontSize:"12px" }}>Edit</button>
-                        <button className="btn btn-ghost" style={{ padding:"4px 10px", fontSize:"12px", color:"#EF4444" }}>Pause</button>
+                        <button className="btn btn-ghost" style={{ padding:"4px 10px", fontSize:"12px" }}>{t("Edit")}</button>
+                        <button className="btn btn-ghost" style={{ padding:"4px 10px", fontSize:"12px", color:"#EF4444" }}>{t("Pause")}</button>
                       </div>
                     </div>
                   </div>
@@ -1538,9 +1575,9 @@ export default function App() {
 
           {dashTab === "earnings" && (
             <div style={{ animation:"fadeUp 0.3s ease" }}>
-              <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"28px", fontWeight:700, color:"#111", marginBottom:"24px" }}>Earnings</h2>
+              <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"28px", fontWeight:700, color:"#111", marginBottom:"24px" }}>{t("Earnings")}</h2>
               <div className="stack-mobile" style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"14px", marginBottom:"28px" }}>
-                {[["₼117","This month"],["₼892","All time"],["₼35","Pending payout"]].map(([v,l])=>(
+                {[["₼117",t("This month")],["₼892",t("All time")],["₼35",t("Pending payout")]].map(([v,l])=>(
                   <div key={l} className="card" style={{ padding:"20px" }}>
                     <div style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"4px" }}>{v}</div>
                     <div style={{ fontSize:"13px", color:"#6B7280" }}>{l}</div>
@@ -1549,40 +1586,40 @@ export default function App() {
               </div>
 
               <div className="card" style={{ padding:"20px", marginBottom:"20px" }}>
-                <div style={{ fontWeight:600, fontSize:"16px", color:"#111", marginBottom:"16px" }}>Transaction history</div>
-                {OWNER_BOOKINGS.map((b,i)=>(
-                  <div key={b.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 0", borderBottom: i<OWNER_BOOKINGS.length-1?"1px solid #F8F7F4":"none" }}>
+                <div style={{ fontWeight:600, fontSize:"16px", color:"#111", marginBottom:"16px" }}>{t("Transaction history")}</div>
+                {OWNER_BOOKINGS().map((b,i)=>(
+                  <div key={b.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 0", borderBottom: i<3?"1px solid #F8F7F4":"none" }}>
                     <div>
-                      <div style={{ fontSize:"14px", fontWeight:500, color:"#111" }}>{b.renter} · {b.item}</div>
+                      <div style={{ fontSize:"14px", fontWeight:500, color:"#111" }}>{b.renter} · {t(b.item)}</div>
                       <div style={{ fontSize:"12px", color:"#9CA3AF" }}>{b.date}</div>
                     </div>
                     <div style={{ textAlign:"right" }}>
                       <div style={{ fontWeight:700, color:"#16A34A" }}>+₼{Math.round(b.total*0.9)}</div>
-                      <div style={{ fontSize:"11px", color:"#9CA3AF" }}>after 10% fee</div>
+                      <div style={{ fontSize:"11px", color:"#9CA3AF" }}>{t("after 10% fee")}</div>
                     </div>
                   </div>
                 ))}
               </div>
 
               <div className="card" style={{ padding:"20px", background:"#F0FDF4", border:"1px solid #BBF7D0" }}>
-                <div style={{ fontWeight:600, color:"#166534", marginBottom:"6px" }}>💳 Payout method</div>
-                <div style={{ fontSize:"13px", color:"#16A34A", marginBottom:"12px" }}>Connect your bank account to receive payouts every Monday.</div>
-                <button className="btn btn-green">Connect bank account →</button>
+                <div style={{ fontWeight:600, color:"#166534", marginBottom:"6px" }}>{t("💳 Payout method")}</div>
+                <div style={{ fontSize:"13px", color:"#16A34A", marginBottom:"12px" }}>{t("Connect your bank account to receive payouts every Monday.")}</div>
+                <button className="btn btn-green">{t("Connect bank account →")}</button>
               </div>
             </div>
           )}
 
           {dashTab === "settings" && (
             <div style={{ animation:"fadeUp 0.3s ease" }}>
-              <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"28px", fontWeight:700, color:"#111", marginBottom:"24px" }}>Settings</h2>
+              <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"28px", fontWeight:700, color:"#111", marginBottom:"24px" }}>{t("Settings")}</h2>
               <div style={{ display:"flex", flexDirection:"column", gap:"16px" }}>
                 {[
-                  { title:"Profile information", desc:"Name, email, phone number", icon:"👤" },
-                  { title:"Identity verification", desc: user.verified ? "✓ Verified" : "⚠️ Not verified — required to book", icon:"🛡", action: !user.verified ? ()=>setScreen("verify") : null, actionLabel:"Verify now" },
-                  { title:"Payment methods", desc:"Add or remove cards", icon:"💳" },
-                  { title:"Bank account", desc:"For receiving payouts", icon:"🏦" },
-                  { title:"Notifications", desc:"Email and push preferences", icon:"🔔" },
-                  { title:"Privacy & data", desc:"Control your data", icon:"🔒" },
+                  { title:t("Profile information"), desc:t("Name, email, phone number"), icon:"👤" },
+                  { title:t("Identity verification"), desc: user.verified ? t("✓ Verified") : t("⚠️ Not verified — required to book"), icon:"🛡", action: !user.verified ? ()=>setScreen("verify") : null, actionLabel:t("Verify now") },
+                  { title:t("Payment methods"), desc:t("Add or remove cards"), icon:"💳" },
+                  { title:t("Bank account"), desc:t("For receiving payouts"), icon:"🏦" },
+                  { title:t("Notifications"), desc:t("Email and push preferences"), icon:"🔔" },
+                  { title:t("Privacy & data"), desc:t("Control your data"), icon:"🔒" },
                 ].map(s=>(
                   <div key={s.title} className="card" style={{ padding:"18px 20px", display:"flex", alignItems:"center", gap:"14px" }}>
                     <div style={{ width:"40px", height:"40px", borderRadius:"12px", background:"#F8F7F4", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"20px" }}>{s.icon}</div>
