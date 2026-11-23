@@ -335,7 +335,7 @@ export default function App() {
           {item.verified && <span className="pill-light">✓ Verified</span>}
         </div>
         <div style={{ position:"absolute", bottom:"10px", left:"12px", right:"12px", display:"flex", justifyContent:"space-between", alignItems:"center", gap:"6px" }}>
-          {item.insured ? <span className="pill-green">🛡 Insured</span> : <span />}
+          {item.insured ? <span className="pill-green">🛡 Protected</span> : <span />}
           {item.retail && <span className="pill-dark">New: ₼{item.retail.toLocaleString("en")}</span>}
         </div>
       </ItemPhoto>
@@ -544,7 +544,7 @@ export default function App() {
               <div style={{ flex:1, height:"1px", background:"#F0EFEC" }} />
             </div>
 
-            {["🇦🇿 AzəriCard","🍎 Apple","🔵 Google"].map(p=>(
+            {["🍎 Apple","🔵 Google"].map(p=>(
               <button key={p} className="btn btn-outline btn-full" onClick={handleLogin} style={{ justifyContent:"center" }}>{p}</button>
             ))}
           </div>
@@ -653,7 +653,7 @@ export default function App() {
       {/* Stats */}
       <div style={{ background:"#111", padding:"40px 32px" }}>
         <div style={{ maxWidth:"900px", margin:"0 auto", display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))", gap:"32px" }}>
-          {[["4,200+","items available"],["₼8.2M","saved by renters"],["12,000+","verified users"],["98%","on-time returns"],["10%","platform fee only"]].map(([n,l])=>(
+          {[["₼0","to list your item"],["10%","platform fee only"],["90%","goes to the owner"],["Ⓜ","pickup near your metro"],["7+","days = 20% off"]].map(([n,l])=>(
             <div key={l} style={{ textAlign:"center" }}>
               <div style={{ fontFamily:"'Fraunces',serif", fontSize:"36px", fontWeight:700, color:"#fff", marginBottom:"4px" }}>{n}</div>
               <div style={{ fontSize:"13px", color:"rgba(255,255,255,0.4)", fontWeight:300 }}>{l}</div>
@@ -671,7 +671,7 @@ export default function App() {
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))", gap:"16px" }}>
           {[
             { icon:"🔍", title:"Find", desc:"Browse thousands of items near you. Filter by category, price, or date." },
-            { icon:"✅", title:"Verify", desc:"One-time ID check via Stripe Identity. Takes 60 seconds. Keeps everyone safe." },
+            { icon:"✅", title:"Verify", desc:"One-time ID check. Takes about a minute. Keeps everyone safe." },
             { icon:"📅", title:"Book", desc:"Pick your dates, pay securely. Deposit held and released automatically." },
             { icon:"🤝", title:"Meet", desc:"Pick up, use, return. Leave a review. Build your rental reputation." },
             { icon:"💰", title:"Earn", desc:"List your idle items and earn while they sit. You keep 90% of every booking." },
@@ -688,7 +688,10 @@ export default function App() {
       {/* Featured */}
       <div style={{ padding:"0 16px 80px", maxWidth:"1200px", margin:"0 auto" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"28px" }}>
-          <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, letterSpacing:"-0.5px", color:"#111" }}>Popular near you</h2>
+          <div>
+            <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, letterSpacing:"-0.5px", color:"#111" }}>Popular near you</h2>
+            <div style={{ fontSize:"13px", color:"#9CA3AF", marginTop:"4px" }}>Early preview: these are example listings while we launch.</div>
+          </div>
           <button className="btn btn-outline" onClick={()=>{ setCat("all"); setMetroFilter("all"); go("browse"); }}>View all →</button>
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))", gap:"16px" }}>
@@ -743,14 +746,14 @@ export default function App() {
           <div className="stack-mobile" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"64px", alignItems:"center" }}>
             <div>
               <div style={{ fontSize:"12px", fontWeight:600, color:"#16A34A", letterSpacing:"2px", textTransform:"uppercase", marginBottom:"12px" }}>Protection built in</div>
-              <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(28px,4vw,44px)", fontWeight:700, letterSpacing:"-0.5px", color:"#111", marginBottom:"20px", lineHeight:1.1 }}>Every rental is<br/><em style={{ fontStyle:"italic" }}>covered.</em></h2>
+              <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(28px,4vw,44px)", fontWeight:700, letterSpacing:"-0.5px", color:"#111", marginBottom:"20px", lineHeight:1.1 }}>Every rental is<br/><em style={{ fontStyle:"italic" }}>protected.</em></h2>
               <p style={{ fontSize:"15px", color:"#6B7280", lineHeight:1.8, marginBottom:"28px" }}>
-                We partner with Guardhog to insure every rental automatically. Owners are protected. Renters are covered. Nobody loses.
+                Every rental has a deposit, a verified renter, and photos of the item's condition at pickup. If something goes wrong, there's a clear record of what happened.
               </p>
               {[
-                { icon:"🛡", title:"Item insurance", desc:"Up to ₼50,000 per item, per rental" },
-                { icon:"💳", title:"Secure deposits", desc:"Held by Stripe, released on return" },
-                { icon:"✅", title:"ID verification", desc:"All users verified via Stripe Identity" },
+                { icon:"💳", title:"Secure deposits", desc:"Held during the rental, released on safe return" },
+                { icon:"✅", title:"ID verification", desc:"Every renter verifies their ID before booking" },
+                { icon:"📸", title:"Pickup photo check", desc:"Condition photos from both sides at handover" },
                 { icon:"⭐", title:"Review system", desc:"Two-way reviews build trust" },
               ].map(f=>(
                 <div key={f.title} style={{ display:"flex", gap:"14px", alignItems:"flex-start", marginBottom:"16px" }}>
@@ -764,10 +767,10 @@ export default function App() {
             </div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px" }}>
               {[
-                { label:"Items insured", value:"4,200+", icon:"🛡", color:"#F0FDF4" },
-                { label:"Claims paid", value:"₼2.1M", icon:"💰", color:"#FEF3C7" },
-                { label:"Avg response", value:"< 2hrs", icon:"⚡", color:"#EFF6FF" },
-                { label:"User satisfaction", value:"98%", icon:"⭐", color:"#FDF4FF" },
+                { label:"Owners keep of every booking", value:"90%", icon:"💰", color:"#F0FDF4" },
+                { label:"To list an item", value:"₼0", icon:"📦", color:"#FEF3C7" },
+                { label:"Photos at every pickup", value:"3", icon:"📸", color:"#EFF6FF" },
+                { label:"To verify your ID", value:"1 min", icon:"⚡", color:"#FDF4FF" },
               ].map(s=>(
                 <div key={s.label} className="card" style={{ padding:"24px", background:s.color, border:"none" }}>
                   <div style={{ fontSize:"28px", marginBottom:"8px" }}>{s.icon}</div>
@@ -807,7 +810,7 @@ export default function App() {
           ))}
         </div>
         <div style={{ borderTop:"1px solid rgba(255,255,255,0.06)", paddingTop:"24px", display:"flex", justifyContent:"space-between", flexWrap:"wrap", gap:"12px" }}>
-          <span style={{ fontSize:"12px", color:"rgba(255,255,255,0.2)" }}>© 2025 lend. · Baku, Azerbaijan</span>
+          <span style={{ fontSize:"12px", color:"rgba(255,255,255,0.2)" }}>© {new Date().getFullYear()} lend. · Baku, Azerbaijan</span>
           <span style={{ fontSize:"12px", color:"rgba(255,255,255,0.2)" }}>Product photos from Unsplash</span>
         </div>
       </div>
@@ -845,7 +848,7 @@ export default function App() {
             <option value={0}>Any price</option>
             {[10,25,50,100].map(p=><option key={p} value={p}>Up to ₼{p}/day</option>)}
           </select>
-          <button className={`chip ${insuredOnly?"on":""}`} onClick={()=>setInsuredOnly(v=>!v)} aria-pressed={insuredOnly}>🛡 Insured only</button>
+          <button className={`chip ${insuredOnly?"on":""}`} onClick={()=>setInsuredOnly(v=>!v)} aria-pressed={insuredOnly}>🛡 Protected only</button>
           <div style={{ flex:1 }} />
           <label className="sr-only" htmlFor="f-sort">Sort by</label>
           <select id="f-sort" className="sel" value={sort} onChange={e=>setSort(e.target.value)}>
@@ -861,6 +864,7 @@ export default function App() {
             <strong style={{ color:"#111" }}>{filtered.length}</strong> item{filtered.length===1?"":"s"}
             {search && <> for “{search}”</>}
             {metroFilter!=="all" && <> near <strong style={{ color:"#111" }}>{metroFilter}</strong> metro</>}
+            <span style={{ color:"#9CA3AF" }}> · example listings</span>
           </div>
           {(metroFilter!=="all"||insuredOnly||maxPrice||cat!=="all"||search) && (
             <button className="btn btn-ghost" style={{ padding:"6px 10px", fontSize:"12px" }} onClick={()=>{ setMetroFilter("all"); setInsuredOnly(false); setMaxPrice(0); setCat("all"); setSearch(""); }}>Clear filters</button>
@@ -902,7 +906,7 @@ export default function App() {
           <div style={{ minWidth:0 }}>
             <ItemPhoto item={item} height="clamp(260px,45vw,440px)" radius="24px" emojiSize={110}>
               <div className="ph-shade" style={{ position:"absolute", inset:0 }} />
-              {item.insured && <div style={{ position:"absolute", top:"16px", left:"16px" }}><span className="pill-green" style={{ fontSize:"11px" }}>🛡 Insured by Guardhog</span></div>}
+              {item.insured && <div style={{ position:"absolute", top:"16px", left:"16px" }}><span className="pill-green" style={{ fontSize:"11px" }}>🛡 Deposit protected</span></div>}
               {item.verified && <div style={{ position:"absolute", top:"16px", right:"16px" }}><span className="pill-light" style={{ fontSize:"11px" }}>✓ Verified item</span></div>}
             </ItemPhoto>
 
@@ -965,9 +969,9 @@ export default function App() {
             {/* Insurance details */}
             {item.insured && (
               <div style={{ background:"#F0FDF4", border:"1px solid #BBF7D0", borderRadius:"16px", padding:"20px", marginBottom:"28px" }}>
-                <div style={{ fontWeight:600, fontSize:"14px", color:"#166534", marginBottom:"10px" }}>🛡 This item is insured</div>
+                <div style={{ fontWeight:600, fontSize:"14px", color:"#166534", marginBottom:"10px" }}>🛡 How this rental is protected</div>
                 <div style={{ fontSize:"13px", color:"#166534", lineHeight:1.7 }}>
-                  Covered up to ₼50,000 per rental through our Guardhog partnership. At pickup, you and the owner both photograph the item, so any damage claim is settled from photos. The deposit is held by Stripe and returned automatically after a safe return.
+                  The owner holds a ₼{item.deposit} deposit that comes back after a safe return. At pickup, you and the owner both photograph the item, so any damage question is settled from the photos.
                 </div>
               </div>
             )}
@@ -1017,7 +1021,7 @@ export default function App() {
                   [`₼${item.price} × ${days} day${days>1?"s":""}`, `₼${qt.base}`],
                   ...(qt.discount ? [[`${days>=7?"Weekly":"3+ day"} discount (${discountRate(days)*100}%)`, `−₼${qt.discount}`, true]] : []),
                   ["Service fee (10%)", `₼${qt.fee}`],
-                  ...(qt.insurance ? [["Insurance", `₼${qt.insurance}`]] : []),
+                  ...(qt.insurance ? [["Protection fee", `₼${qt.insurance}`]] : []),
                   ...(delivery ? [["Delivery", `₼${qt.deliveryFee}`]] : []),
                 ].map(([l,v,green])=>(
                   <div key={l} style={{ display:"flex", justifyContent:"space-between", fontSize:"13px", color: green?"#16A34A":"#374151", marginBottom:"8px", fontWeight: green?600:400 }}>
@@ -1061,7 +1065,7 @@ export default function App() {
         <div style={{ textAlign:"center", marginBottom:"40px" }}>
           <div style={{ width:"64px", height:"64px", borderRadius:"20px", background:"#F0FDF4", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 16px", fontSize:"28px" }}>🛡</div>
           <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"8px" }}>Verify your identity</h2>
-          <p style={{ fontSize:"15px", color:"#6B7280", lineHeight:1.7 }}>One-time check. Keeps everyone safe. Powered by Stripe Identity.</p>
+          <p style={{ fontSize:"15px", color:"#6B7280", lineHeight:1.7 }}>One-time check. Keeps everyone safe.</p>
         </div>
 
         {/* Progress */}
@@ -1104,7 +1108,7 @@ export default function App() {
           <div style={{ animation:"fadeUp 0.4s ease", textAlign:"center" }}>
             <div style={{ width:"80px", height:"80px", border:"4px solid #F0EFEC", borderTop:"4px solid #16A34A", borderRadius:"50%", margin:"0 auto 24px", animation:"spin 1s linear infinite" }} />
             <div style={{ fontFamily:"'Fraunces',serif", fontSize:"24px", fontWeight:600, color:"#111", marginBottom:"8px" }}>Verifying...</div>
-            <div style={{ fontSize:"14px", color:"#6B7280", marginBottom:"32px" }}>Stripe Identity is checking your documents</div>
+            <div style={{ fontSize:"14px", color:"#6B7280", marginBottom:"32px" }}>Checking your documents</div>
             <button className="btn btn-green btn-lg btn-full" onClick={handleVerifyDone}>
               Verification complete ✓
             </button>
@@ -1112,8 +1116,7 @@ export default function App() {
         )}
 
         <div style={{ marginTop:"24px", background:"#F8F7F4", borderRadius:"14px", padding:"16px", fontSize:"13px", color:"#6B7280", lineHeight:1.7 }}>
-          🔒 <strong style={{ color:"#111" }}>Your privacy is protected.</strong> Documents are encrypted, processed by Stripe Identity, and never stored on our servers. We only receive a verified/not verified result.
-        </div>
+          🔒 <strong style={{ color:"#111" }}>Your privacy is protected.</strong> Your documents are encrypted and only used to confirm who you are.</div>
       </div>
     </div>
   );
@@ -1247,7 +1250,7 @@ export default function App() {
                     <label className="slot" style={{ aspectRatio:"16/9", ...(listForm.photo?{ borderStyle:"solid", borderColor:"#16A34A" }:{}) }}>
                       {listForm.photo
                         ? <img src={listForm.photo} alt="Your item" />
-                        : <><span style={{ fontSize:"28px" }}>📷</span><strong style={{ color:"#111" }}>Add a photo of your item</strong><span>Listings with a real photo get 3x more bookings</span></>}
+                        : <><span style={{ fontSize:"28px" }}>📷</span><strong style={{ color:"#111" }}>Add a photo of your item</strong><span>Real photos help renters trust your listing</span></>}
                       <input type="file" accept="image/*" aria-label="Add a photo of your item" onChange={e=>readPhoto(e.target.files?.[0], url=>setListForm(f=>({...f,photo:url})))} />
                     </label>
                     {listForm.photo && <button className="btn btn-ghost" style={{ marginTop:"6px", fontSize:"12px", padding:"6px 10px" }} onClick={()=>setListForm(f=>({...f,photo:null}))}>Remove photo</button>}
@@ -1259,7 +1262,7 @@ export default function App() {
             {listStep === 1 && (
               <div style={{ animation:"fadeUp 0.4s ease" }}>
                 <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"6px" }}>Describe your item</h2>
-                <p style={{ fontSize:"15px", color:"#6B7280", marginBottom:"28px" }}>Good descriptions get 3x more bookings.</p>
+                <p style={{ fontSize:"15px", color:"#6B7280", marginBottom:"28px" }}>A clear description helps renters choose your item.</p>
                 <div style={{ display:"flex", flexDirection:"column", gap:"14px" }}>
                   <div>
                     <label style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>Description</label>
@@ -1291,7 +1294,7 @@ export default function App() {
                         <div style={{ marginTop:"10px", background:"#111", color:"#fff", borderRadius:"14px", padding:"14px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"12px", flexWrap:"wrap" }}>
                           <div style={{ fontSize:"13px", lineHeight:1.5 }}>
                             <div style={{ fontWeight:600 }}>Suggested: ₼{sug}/day, ₼{dep} deposit</div>
-                            <div style={{ color:"rgba(255,255,255,0.55)", fontSize:"12px" }}>Similar items in Baku rent for about 3% of their price per day.</div>
+                            <div style={{ color:"rgba(255,255,255,0.55)", fontSize:"12px" }}>A common starting point is about 3% of the item's price per day.</div>
                           </div>
                           <button className="btn btn-green" onClick={()=>setListForm(f=>({...f,price:String(sug),deposit:String(dep)}))}>Use these</button>
                         </div>
@@ -1311,7 +1314,7 @@ export default function App() {
                       <div style={{ position:"absolute", left:"16px", top:"50%", transform:"translateY(-50%)", fontFamily:"'Fraunces',serif", fontSize:"20px", color:"#6B7280", pointerEvents:"none" }}>₼</div>
                       <input className="inp" style={{ paddingLeft:"34px", fontSize:"20px", fontFamily:"'Fraunces',serif" }} placeholder="0" type="number" value={listForm.deposit} onChange={e=>setListForm(f=>({...f,deposit:e.target.value}))} />
                     </div>
-                    <div style={{ fontSize:"12px", color:"#9CA3AF", marginTop:"6px" }}>Held by Stripe and returned automatically when item comes back safely.</div>
+                    <div style={{ fontSize:"12px", color:"#9CA3AF", marginTop:"6px" }}>Held during the rental and returned when the item comes back safely.</div>
                   </div>
 
                   {listForm.price && (
@@ -1354,7 +1357,7 @@ export default function App() {
                   ))}
                 </div>
                 <div style={{ background:"#F0FDF4", border:"1px solid #BBF7D0", borderRadius:"14px", padding:"14px 16px", fontSize:"13px", color:"#166534" }}>
-                  ✓ Your item will be automatically insured once you connect your bank account in settings.
+                  ✓ Renters pay a deposit and photograph your item at pickup, so you have a record of its condition.
                 </div>
               </div>
             )}
@@ -1575,7 +1578,7 @@ export default function App() {
               <div style={{ display:"flex", flexDirection:"column", gap:"16px" }}>
                 {[
                   { title:"Profile information", desc:"Name, email, phone number", icon:"👤" },
-                  { title:"Identity verification", desc: user.verified ? "✓ Verified via Stripe Identity" : "⚠️ Not verified — required to book", icon:"🛡", action: !user.verified ? ()=>setScreen("verify") : null, actionLabel:"Verify now" },
+                  { title:"Identity verification", desc: user.verified ? "✓ Verified" : "⚠️ Not verified — required to book", icon:"🛡", action: !user.verified ? ()=>setScreen("verify") : null, actionLabel:"Verify now" },
                   { title:"Payment methods", desc:"Add or remove cards", icon:"💳" },
                   { title:"Bank account", desc:"For receiving payouts", icon:"🏦" },
                   { title:"Notifications", desc:"Email and push preferences", icon:"🔔" },
