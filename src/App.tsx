@@ -230,10 +230,13 @@ export default function App() {
     .searchbar input{flex:1;border:none;outline:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:14px;color:#111;}
     .searchbar input::placeholder{color:#9CA3AF;}
 
+    @media(max-width:1024px){ .hero-float{display:none!important;} }
+    html,body{overflow-x:hidden;}
     @media(max-width:768px){
       .nav{padding:12px 16px;}
       .hide-mobile{display:none!important;}
       .show-mobile{display:flex!important;}
+      .stack-mobile{grid-template-columns:1fr!important;gap:24px!important;}
     }
   `;
 
@@ -339,7 +342,7 @@ export default function App() {
           { emoji:"🎸", title:"Fender Strat", price:"₼20/day", bottom:"30%", left:"3%", delay:"2s" },
           { emoji:"🚁", title:"DJI Mavic Pro", price:"₼55/day", bottom:"28%", right:"3%", delay:"0.5s" },
         ].map((f,i)=>(
-          <div key={i} style={{ position:"absolute", ...Object.fromEntries(["top","left","right","bottom"].filter(k=>f[k]).map(k=>[k,f[k]])), animation:`float 4s ease ${f.delay} infinite`, opacity:0.9, zIndex:1 }}>
+          <div key={i} className="hero-float" style={{ position:"absolute", ...Object.fromEntries(["top","left","right","bottom"].filter(k=>f[k]).map(k=>[k,f[k]])), animation:`float 4s ease ${f.delay} infinite`, opacity:0.9, zIndex:1 }}>
             <div className="card" style={{ padding:"12px 16px", display:"flex", alignItems:"center", gap:"10px", boxShadow:"0 4px 16px rgba(0,0,0,0.08)", borderRadius:"14px" }}>
               <span style={{ fontSize:"22px" }}>{f.emoji}</span>
               <div>
@@ -456,7 +459,7 @@ export default function App() {
       {/* Insurance section */}
       <div style={{ background:"#fff", padding:"80px 32px", borderTop:"1px solid #F0EFEC", borderBottom:"1px solid #F0EFEC" }}>
         <div style={{ maxWidth:"900px", margin:"0 auto" }}>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"64px", alignItems:"center" }}>
+          <div className="stack-mobile" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"64px", alignItems:"center" }}>
             <div>
               <div style={{ fontSize:"12px", fontWeight:600, color:"#16A34A", letterSpacing:"2px", textTransform:"uppercase", marginBottom:"12px" }}>Protection built in</div>
               <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(28px,4vw,44px)", fontWeight:700, letterSpacing:"-0.5px", color:"#111", marginBottom:"20px", lineHeight:1.1 }}>Every rental is<br/><em style={{ fontStyle:"italic" }}>covered.</em></h2>
@@ -510,7 +513,7 @@ export default function App() {
 
       {/* Footer */}
       <div style={{ background:"#0A0A0A", padding:"40px 32px" }}>
-        <div style={{ maxWidth:"1100px", margin:"0 auto", display:"grid", gridTemplateColumns:"2fr 1fr 1fr 1fr", gap:"40px", marginBottom:"40px" }}>
+        <div className="stack-mobile" style={{ maxWidth:"1100px", margin:"0 auto", display:"grid", gridTemplateColumns:"2fr 1fr 1fr 1fr", gap:"40px", marginBottom:"40px" }}>
           <div>
             <div className="logo" style={{ color:"#fff", marginBottom:"12px", display:"block" }}>lend<span>.</span></div>
             <div style={{ fontSize:"13px", color:"rgba(255,255,255,0.3)", lineHeight:1.7, fontStyle:"italic", fontFamily:"'Fraunces',serif" }}>Making ownership optional, one rental at a time.</div>
@@ -608,7 +611,7 @@ export default function App() {
       <div style={{ maxWidth:"1100px", margin:"0 auto", padding:"90px 24px 60px" }}>
         <button className="btn btn-ghost" onClick={()=>setScreen("browse")} style={{ marginBottom:"24px" }}>← Back to browse</button>
 
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 380px", gap:"48px", alignItems:"start" }}>
+        <div className="stack-mobile" style={{ display:"grid", gridTemplateColumns:"1fr 380px", gap:"48px", alignItems:"start" }}>
           {/* Left */}
           <div>
             <div style={{ height:"380px", background:`linear-gradient(135deg,${selected.color},${selected.color}88)`, borderRadius:"24px", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:"28px", border:"1px solid rgba(255,255,255,0.08)", position:"relative" }}>
@@ -994,7 +997,7 @@ export default function App() {
     <div style={{ minHeight:"100vh", background:BG }}><style>{css}</style>
       <Header minimal />
       <Notif />
-      <div style={{ maxWidth:"1100px", margin:"0 auto", padding:"90px 24px 60px", display:"grid", gridTemplateColumns:"220px 1fr", gap:"32px", alignItems:"start" }}>
+      <div className="stack-mobile" style={{ maxWidth:"1100px", margin:"0 auto", padding:"90px 24px 60px", display:"grid", gridTemplateColumns:"220px 1fr", gap:"32px", alignItems:"start" }}>
 
         {/* Sidebar */}
         <div className="card" style={{ padding:"20px", position:"sticky", top:"90px" }}>
@@ -1047,7 +1050,7 @@ export default function App() {
                 </div>
               )}
 
-              <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"14px", marginBottom:"28px" }}>
+              <div className="stack-mobile" style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"14px", marginBottom:"28px" }}>
                 {[
                   { label:"Active bookings", value:"1", icon:"📅", color:"#EFF6FF" },
                   { label:"Items listed", value:`${OWNER_LISTINGS.length}`, icon:"📦", color:"#F0FDF4" },
@@ -1138,7 +1141,7 @@ export default function App() {
           {dashTab === "earnings" && (
             <div style={{ animation:"fadeUp 0.3s ease" }}>
               <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"28px", fontWeight:700, color:"#111", marginBottom:"24px" }}>Earnings</h2>
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"14px", marginBottom:"28px" }}>
+              <div className="stack-mobile" style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"14px", marginBottom:"28px" }}>
                 {[["₼117","This month"],["₼892","All time"],["₼35","Pending payout"]].map(([v,l])=>(
                   <div key={l} className="card" style={{ padding:"20px" }}>
                     <div style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"4px" }}>{v}</div>
