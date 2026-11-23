@@ -15,27 +15,79 @@ const CATS = [
   { id:"homes",    label:"Spaces",      icon:"🏠" },
 ];
 
+// Product photos from Unsplash (free to use under the Unsplash License).
+import camera from "./photos/camera.jpg";
+import drill from "./photos/drill.jpg";
+import surfboard from "./photos/surfboard.jpg";
+import guitar from "./photos/guitar.jpg";
+import drone from "./photos/drone.jpg";
+import backpack from "./photos/backpack.jpg";
+import speakers from "./photos/speakers.jpg";
+import tent from "./photos/tent.jpg";
+import instant from "./photos/instant.jpg";
+import macbook from "./photos/macbook.jpg";
+import tesla from "./photos/tesla.jpg";
+import studio from "./photos/studio.jpg";
+import jbl from "./photos/jbl.jpg";
+import nikon from "./photos/nikon.jpg";
+
+// ── Dates ─────────────────────────────────────────────────────────────────
+const pad = n => String(n).padStart(2, "0");
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const today = () => { const d = new Date(); d.setHours(0,0,0,0); return d; };
+const rel = n => { const d = today(); d.setDate(d.getDate()+n); return iso(d); };
+const parseIso = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); };
+const dayDiff = (a, b) => Math.round((parseIso(b) - parseIso(a)) / 86400000);
+const fmtDate = s => parseIso(s).toLocaleDateString("en-GB", { day:"numeric", month:"short" });
+const fmtRange = (a, b) => a === b ? fmtDate(a) : `${fmtDate(a)} – ${fmtDate(b)}`;
+
+// ── Pricing ───────────────────────────────────────────────────────────────
+// Longer rentals get cheaper per day: 10% off from 3 days, 20% off from 7 days.
+const discountRate = days => days >= 7 ? 0.2 : days >= 3 ? 0.1 : 0;
+const DELIVERY_FEE = 10;
+function quote(item, days, delivery = false) {
+  const base = item.price * days;
+  const discount = Math.round(base * discountRate(days));
+  const fee = Math.round((base - discount) * 0.1);
+  const insurance = item.insured ? 5 : 0;
+  const deliveryFee = delivery ? DELIVERY_FEE : 0;
+  return { base, discount, fee, insurance, deliveryFee, total: base - discount + fee + insurance + deliveryFee };
+}
+
+// Baku metro stations used for pickup points.
+const METRO = ["28 May","Nizami","Sahil","İçərişəhər","Gənclik","Nərimanov","Elmlər Akademiyası","İnşaatçılar","20 Yanvar","Koroğlu","Neftçilər","Xalqlar Dostluğu","Memar Əcəmi","Həzi Aslanov","Nəsimi","8 Noyabr"];
+
 const LISTINGS = [
-  { id:1,  cat:"cameras",  title:"Sony A7III + 50mm Lens",         owner:"Elvin K.",    ownerRating:4.9, ownerJoined:"2023", city:"Baku",       price:35,  deposit:200, rating:4.9, reviews:28, color:"#1A1A2E", emoji:"📷", desc:"Full frame mirrorless, perfect for weddings or portraits. Includes battery, charger, 64GB card.",   rules:["Return fully charged","Include all accessories","No commercial use without approval"],  insured:true,  verified:true,  availability:"Available now",      bookedDates:["2025-06-10","2025-06-11"] },
-  { id:2,  cat:"tools",    title:"Makita Power Drill Set",          owner:"Ruslan M.",   ownerRating:4.8, ownerJoined:"2022", city:"Baku",       price:12,  deposit:80,  rating:4.8, reviews:41, color:"#1C3A1C", emoji:"🔧", desc:"Professional drill with full bit set. Perfect for home renovation projects.",                   rules:["Clean before return","No masonry without asking","Return same day if 1-day rental"],   insured:true,  verified:true,  availability:"Available now",      bookedDates:[] },
-  { id:3,  cat:"sports",   title:"Surfboard — 7ft Funboard",        owner:"Leyla A.",    ownerRating:5.0, ownerJoined:"2024", city:"Sumqayit",   price:25,  deposit:150, rating:5.0, reviews:12, color:"#1A2A3A", emoji:"🏄", desc:"Great for beginners and intermediate surfers. Includes leash and wax.",                       rules:["Rinse after use","No rocks or reef","Carry bag must be returned"],                    insured:true,  verified:true,  availability:"Available weekends",  bookedDates:["2025-06-14","2025-06-15"] },
-  { id:4,  cat:"music",    title:"Fender Stratocaster + Amp",       owner:"Kamran B.",   ownerRating:4.7, ownerJoined:"2023", city:"Baku",       price:20,  deposit:300, rating:4.7, reviews:19, color:"#2A1A1A", emoji:"🎸", desc:"Classic Strat in sunburst. Includes amp, cable, and picks.",                                 rules:["No outdoor gigs","Handle with care","Includes free lesson if needed"],                insured:true,  verified:true,  availability:"Available now",      bookedDates:[] },
-  { id:5,  cat:"tech",     title:"DJI Mavic Pro 3 Drone",           owner:"Nigar S.",    ownerRating:4.9, ownerJoined:"2022", city:"Baku",       price:55,  deposit:400, rating:4.9, reviews:33, color:"#1A1A1A", emoji:"🚁", desc:"4K drone with obstacle avoidance. Great for real estate, events, or travel content.",         rules:["Must have drone license","No fly zones apply","Return with full battery"],            insured:true,  verified:true,  availability:"Available now",      bookedDates:[] },
-  { id:6,  cat:"travel",   title:"Osprey 65L Hiking Pack",          owner:"Tural N.",    ownerRating:4.6, ownerJoined:"2023", city:"Baku",       price:10,  deposit:60,  rating:4.6, reviews:22, color:"#2A1C10", emoji:"🎒", desc:"Fully loaded hiking backpack with rain cover.",                                               rules:["Empty before return","No machine wash","Patch any tears"],                           insured:false, verified:true,  availability:"Available now",      bookedDates:[] },
-  { id:7,  cat:"events",   title:"PA Speaker System (2x Yamaha)",   owner:"Anar Q.",     ownerRating:4.8, ownerJoined:"2021", city:"Baku",       price:45,  deposit:500, rating:4.8, reviews:15, color:"#1A0A2A", emoji:"🔊", desc:"2x Yamaha DXR12 speakers + mixer. Handles 200 people.",                                      rules:["Delivery available (+₼20)","Setup help included","Return by 10am next day"],         insured:true,  verified:true,  availability:"Book 2 days ahead",  bookedDates:["2025-06-08","2025-06-09"] },
-  { id:8,  cat:"outdoor",  title:"4-Person Camping Tent",           owner:"Sevinc R.",   ownerRating:4.9, ownerJoined:"2023", city:"Ganja",      price:15,  deposit:100, rating:4.9, reviews:37, color:"#0A2A1A", emoji:"⛺", desc:"Waterproof, easy setup tent with stakes and poles.",                                         rules:["Dry before returning","No fires near tent","Stake bag must be included"],             insured:false, verified:true,  availability:"Available now",      bookedDates:[] },
-  { id:9,  cat:"cameras",  title:"GoPro Hero 12 + Mount Kit",       owner:"Farid O.",    ownerRating:4.8, ownerJoined:"2023", city:"Baku",       price:18,  deposit:120, rating:4.8, reviews:24, color:"#1A2A1A", emoji:"🎬", desc:"Full mount kit — chest, helmet, selfie stick. Extra batteries included.",                    rules:["Return all mounts","Format card before return","No underwater without case"],        insured:true,  verified:true,  availability:"Available now",      bookedDates:[] },
-  { id:10, cat:"tech",     title:"MacBook Pro M3 16\"",             owner:"Zulfiya H.",  ownerRating:4.7, ownerJoined:"2022", city:"Baku",       price:40,  deposit:600, rating:4.7, reviews:9,  color:"#1C1C2A", emoji:"💻", desc:"Latest MacBook Pro. Fully wiped between rentals.",                                           rules:["No software installs","Return in sleeve","Password set by owner"],                   insured:true,  verified:true,  availability:"Available now",      bookedDates:[] },
-  { id:11, cat:"vehicles", title:"Tesla Model 3 — Day Rental",      owner:"Orxan I.",    ownerRating:5.0, ownerJoined:"2022", city:"Baku",       price:80,  deposit:800, rating:5.0, reviews:18, color:"#0A0A1A", emoji:"🚗", desc:"Full electric, autopilot enabled. Includes full charge. 200km/day included.",               rules:["Valid driving license required","Return with same charge","No smoking"],              insured:true,  verified:true,  availability:"Weekends only",      bookedDates:["2025-06-07","2025-06-08"] },
-  { id:12, cat:"homes",    title:"Rooftop Studio — Old Baku",       owner:"Aytac L.",    ownerRating:4.6, ownerJoined:"2021", city:"Baku",       price:120, deposit:0,   rating:4.6, reviews:11, color:"#1A0800", emoji:"🏠", desc:"Stunning rooftop studio with Old City views. Ideal for photoshoots or events.",            rules:["Max 8 people","No loud music after 10pm","Cleaning fee ₼30 applies"],               insured:true,  verified:true,  availability:"Available now",      bookedDates:[] },
+  { id:1,  cat:"cameras",  title:"Sony A7III + 50mm Lens",       photo:camera,    owner:"Elvin K.",   ownerRating:4.9, ownerJoined:"2023", city:"Baku",     metro:"28 May",            price:35,  deposit:200, retail:4200,  rating:4.9, reviews:28, color:"#1A1A2E", emoji:"📷", desc:"Full frame mirrorless, perfect for weddings or portraits. Includes battery, charger, 64GB card.", rules:["Return fully charged","Include all accessories","No commercial use without approval"], insured:true,  verified:true, availability:"Available now",     bookedDates:[rel(3),rel(4),rel(5)] },
+  { id:2,  cat:"tools",    title:"Cordless Drill + Bit Set",     photo:drill,     owner:"Ruslan M.",  ownerRating:4.8, ownerJoined:"2022", city:"Baku",     metro:"Nərimanov",         price:12,  deposit:80,  retail:450,   rating:4.8, reviews:41, color:"#1C3A1C", emoji:"🔧", desc:"18V cordless drill with two batteries and a full bit set. Perfect for home renovation projects.", rules:["Clean before return","No masonry without asking","Return same day if 1-day rental"], insured:true,  verified:true, availability:"Available now",     bookedDates:[rel(1)] },
+  { id:3,  cat:"sports",   title:"Surfboard — 7ft Funboard",     photo:surfboard, owner:"Leyla A.",   ownerRating:5.0, ownerJoined:"2024", city:"Sumqayit", metro:null,                price:25,  deposit:150, retail:900,   rating:5.0, reviews:12, color:"#1A2A3A", emoji:"🏄", desc:"Great for beginners and intermediate surfers. Includes leash and wax.", rules:["Rinse after use","No rocks or reef","Carry bag must be returned"], insured:true,  verified:true, availability:"Available weekends", bookedDates:[rel(6),rel(7)] },
+  { id:4,  cat:"music",    title:"Electric Guitar + Amp",        photo:guitar,    owner:"Kamran B.",  ownerRating:4.7, ownerJoined:"2023", city:"Baku",     metro:"Gənclik",           price:20,  deposit:300, retail:2600,  rating:4.7, reviews:19, color:"#2A1A1A", emoji:"🎸", desc:"Strat-style electric guitar with a 30W practice amp, cable, and picks.", rules:["No outdoor gigs","Handle with care","Includes free lesson if needed"], insured:true,  verified:true, availability:"Available now",     bookedDates:[] },
+  { id:5,  cat:"tech",     title:"DJI Mavic 3 Drone",            photo:drone,     owner:"Nigar S.",   ownerRating:4.9, ownerJoined:"2022", city:"Baku",     metro:"Sahil",             price:55,  deposit:400, retail:3800,  rating:4.9, reviews:33, color:"#1A1A1A", emoji:"🚁", desc:"4K drone with obstacle avoidance. Great for real estate, events, or travel content. Three batteries included.", rules:["Must have drone license","No fly zones apply","Return with full battery"], insured:true,  verified:true, availability:"Available now",     bookedDates:[rel(10),rel(11)] },
+  { id:6,  cat:"travel",   title:"65L Hiking Backpack",          photo:backpack,  owner:"Tural N.",   ownerRating:4.6, ownerJoined:"2023", city:"Baku",     metro:"Elmlər Akademiyası", price:10,  deposit:60,  retail:550,   rating:4.6, reviews:22, color:"#2A1C10", emoji:"🎒", desc:"Fully loaded hiking backpack with rain cover. Ideal for Quba, Qəbələ or Şahdağ trips.", rules:["Empty before return","No machine wash","Patch any tears"], insured:false, verified:true, availability:"Available now",     bookedDates:[] },
+  { id:7,  cat:"events",   title:"PA Speaker System",            photo:speakers,  owner:"Anar Q.",    ownerRating:4.8, ownerJoined:"2021", city:"Baku",     metro:"Nizami",            price:45,  deposit:500, retail:5500,  rating:4.8, reviews:15, color:"#1A0A2A", emoji:"🔊", desc:"Two 12\" powered speakers + mixer. Handles 200 people.", rules:["Delivery available (+₼20)","Setup help included","Return by 10am next day"], insured:true,  verified:true, availability:"Book 2 days ahead", bookedDates:[rel(2),rel(9)] },
+  { id:8,  cat:"outdoor",  title:"4-Person Camping Tent",        photo:tent,      owner:"Sevinc R.",  ownerRating:4.9, ownerJoined:"2023", city:"Ganja",    metro:null,                price:15,  deposit:100, retail:400,   rating:4.9, reviews:37, color:"#0A2A1A", emoji:"⛺", desc:"Waterproof, easy setup tent with stakes and poles.", rules:["Dry before returning","No fires near tent","Stake bag must be included"], insured:false, verified:true, availability:"Available now",     bookedDates:[] },
+  { id:9,  cat:"events",   title:"Polaroid Instant Camera",      photo:instant,   owner:"Farid O.",   ownerRating:4.8, ownerJoined:"2023", city:"Baku",     metro:"İçərişəhər",        price:8,   deposit:60,  retail:250,   rating:4.8, reviews:24, color:"#1A2A1A", emoji:"📸", desc:"Instant camera for weddings and birthdays. Film packs available from the owner at cost.", rules:["Film not included","Keep away from sand and water","Return in the case"], insured:true,  verified:true, availability:"Available now",     bookedDates:[] },
+  { id:10, cat:"tech",     title:"MacBook Pro 16\"",             photo:macbook,   owner:"Zulfiya H.", ownerRating:4.7, ownerJoined:"2022", city:"Baku",     metro:"28 May",            price:40,  deposit:600, retail:6500,  rating:4.7, reviews:9,  color:"#1C1C2A", emoji:"💻", desc:"Fast laptop for editing and design work. Fully wiped between rentals.", rules:["No software installs","Return in sleeve","Password set by owner"], insured:true,  verified:true, availability:"Available now",     bookedDates:[] },
+  { id:11, cat:"vehicles", title:"Tesla Model 3 — Day Rental",   photo:tesla,     owner:"Orxan I.",   ownerRating:5.0, ownerJoined:"2022", city:"Baku",     metro:"Koroğlu",           price:80,  deposit:800, retail:75000, rating:5.0, reviews:18, color:"#0A0A1A", emoji:"🚗", desc:"Full electric, autopilot enabled. Includes full charge. 200km/day included.", rules:["Valid driving license required","Return with same charge","No smoking"], insured:true,  verified:true, availability:"Weekends only",     bookedDates:[rel(4),rel(5)] },
+  { id:12, cat:"homes",    title:"Sunny Studio — Old City",      photo:studio,    owner:"Aytac L.",   ownerRating:4.6, ownerJoined:"2021", city:"Baku",     metro:"İçərişəhər",        price:120, deposit:0,   retail:null,  rating:4.6, reviews:11, color:"#1A0800", emoji:"🏠", desc:"Bright studio a short walk from the Old City. Ideal for photoshoots, workshops or small events.", rules:["Max 8 people","No loud music after 10pm","Cleaning fee ₼30 applies"], insured:true,  verified:true, availability:"Available now",     bookedDates:[rel(0),rel(1)] },
+  { id:13, cat:"music",    title:"JBL Flip Bluetooth Speaker",   photo:jbl,       owner:"Rəşad M.",   ownerRating:4.8, ownerJoined:"2024", city:"Baku",     metro:"Gənclik",           price:6,   deposit:50,  retail:230,   rating:4.8, reviews:31, color:"#111111", emoji:"🔊", desc:"Waterproof portable speaker, 12 hours of battery. Perfect for a picnic at the Boulevard.", rules:["Return charged","Charging cable included"], insured:false, verified:true, availability:"Available now",     bookedDates:[] },
+  { id:14, cat:"cameras",  title:"Nikon D750 + 50mm f/1.8",      photo:nikon,     owner:"Günay T.",   ownerRating:4.9, ownerJoined:"2022", city:"Baku",     metro:"Memar Əcəmi",       price:28,  deposit:200, retail:2900,  rating:4.9, reviews:17, color:"#1A1A1A", emoji:"📷", desc:"Full frame DSLR with a sharp 50mm prime. Two batteries and a 64GB card.", rules:["Return fully charged","Format card before return"], insured:true,  verified:true, availability:"Available now",     bookedDates:[rel(7)] },
 ];
 
-const OWNER_LISTINGS = LISTINGS.slice(0, 3);
+const EMPTY_LIST_FORM = { title:"", cat:"cameras", price:"", deposit:"", retail:"", desc:"", city:"Baku", metro:"28 May", rules:"", photo:null };
+
+function datesBetween(a, b) {
+  const out = [];
+  for (let d = parseIso(a); iso(d) <= b; d.setDate(d.getDate()+1)) out.push(iso(d));
+  return out;
+}
+
+const DEMO_OWNER_LISTINGS = LISTINGS.slice(0, 3);
 const OWNER_BOOKINGS = [
-  { id:1, item:"Sony A7III + 50mm Lens", renter:"Sara M.", days:2, total:70, date:"Jun 10–12", status:"active",    avatar:"S" },
-  { id:2, item:"Sony A7III + 50mm Lens", renter:"Ali K.",  days:1, total:35, date:"Jun 15",    status:"pending",   avatar:"A" },
-  { id:3, item:"GoPro Hero 12",          renter:"Lena B.", days:3, total:54, date:"May 28–31", status:"completed", avatar:"L" },
-  { id:4, item:"Makita Drill Set",       renter:"Musa T.", days:1, total:12, date:"May 20",    status:"completed", avatar:"M" },
+  { id:1, item:"Sony A7III + 50mm Lens",  renter:"Sara M.", days:3, total:105, date:fmtRange(rel(3),rel(5)),   status:"active",    avatar:"S" },
+  { id:2, item:"Sony A7III + 50mm Lens",  renter:"Ali K.",  days:1, total:35,  date:fmtDate(rel(9)),           status:"pending",   avatar:"A" },
+  { id:3, item:"Polaroid Instant Camera", renter:"Lena B.", days:3, total:24,  date:fmtRange(rel(-12),rel(-10)), status:"completed", avatar:"L" },
+  { id:4, item:"Cordless Drill + Bit Set",renter:"Musa T.", days:1, total:12,  date:fmtDate(rel(-20)),         status:"completed", avatar:"M" },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -49,6 +101,83 @@ function Avatar({ name, size=36, bg="#6C63FF" }) {
   return <div style={{ width:size, height:size, borderRadius:"50%", background:bg, display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontWeight:700, fontSize:size*0.38, flexShrink:0 }}>{name[0]}</div>;
 }
 
+// Baku Metro style "M" marker for pickup points.
+function MetroTag({ station, city, light=false }) {
+  if (!station) return <span>📍 {city}</span>;
+  return (
+    <span style={{ display:"inline-flex", alignItems:"center", gap:"5px" }}>
+      <span className="metro-m">M</span>
+      <span style={{ color: light ? "#fff" : undefined }}>{station}</span>
+    </span>
+  );
+}
+
+// Item photo, or a coloured panel with the category emoji when there is no photo.
+function ItemPhoto({ item, height, radius=0, emojiSize=56, children }) {
+  return (
+    <div className="ph" style={{ height, borderRadius:radius, background:`linear-gradient(135deg,${item.color},${item.color}AA)` }}>
+      {item.photo
+        ? <img src={item.photo} alt={item.title} loading="lazy" />
+        : <span style={{ fontSize:emojiSize }}>{item.emoji}</span>}
+      {children}
+    </div>
+  );
+}
+
+// Month calendar for picking a rental date range. Booked and past days are blocked.
+function RangeCalendar({ booked, range, onChange }) {
+  const [offset, setOffset] = useState(0);
+  const first = today(); first.setDate(1); first.setMonth(first.getMonth() + offset);
+  const year = first.getFullYear(), month = first.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const lead = (first.getDay() + 6) % 7; // Monday first
+  const todayIso = iso(today());
+  const bookedSet = new Set(booked);
+
+  const pick = d => {
+    if (bookedSet.has(d) || d < todayIso) return;
+    const { start, end } = range;
+    if (!start || end || d < start) return onChange({ start:d, end:null });
+    const clash = datesBetween(start, d).some(x => bookedSet.has(x));
+    onChange(clash ? { start:d, end:null } : { start, end:d });
+  };
+
+  const cells = [];
+  for (let i = 0; i < lead; i++) cells.push(<div key={"b"+i} />);
+  for (let n = 1; n <= daysInMonth; n++) {
+    const d = `${year}-${pad(month+1)}-${pad(n)}`;
+    const end = range.end || range.start;
+    const isBooked = bookedSet.has(d), isPast = d < todayIso;
+    const isEdge = d === range.start || d === range.end;
+    const inRange = range.start && d > range.start && d < end;
+    cells.push(
+      <button key={d} type="button" onClick={()=>pick(d)} disabled={isBooked || isPast}
+        className={`cal-day${isEdge?" edge":""}${inRange?" in":""}${isBooked?" booked":""}${d===todayIso?" today":""}`}
+        aria-label={`${d}${isBooked?" (booked)":""}`}>
+        {n}
+      </button>
+    );
+  }
+
+  return (
+    <div className="cal">
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"10px" }}>
+        <button type="button" className="cal-nav" onClick={()=>setOffset(o=>Math.max(0,o-1))} disabled={offset===0} aria-label="Previous month">‹</button>
+        <div style={{ fontWeight:600, fontSize:"14px" }}>{first.toLocaleDateString("en-GB", { month:"long", year:"numeric" })}</div>
+        <button type="button" className="cal-nav" onClick={()=>setOffset(o=>Math.min(5,o+1))} aria-label="Next month">›</button>
+      </div>
+      <div className="cal-grid">
+        {["Mo","Tu","We","Th","Fr","Sa","Su"].map(w=><div key={w} className="cal-w">{w}</div>)}
+        {cells}
+      </div>
+      <div style={{ display:"flex", gap:"14px", fontSize:"11px", color:"#6B7280", marginTop:"10px" }}>
+        <span><span className="cal-key" style={{ background:"#16A34A" }} /> Your dates</span>
+        <span><span className="cal-key" style={{ background:"#F3F4F6", textDecoration:"line-through" }} /> Booked</span>
+      </div>
+    </div>
+  );
+}
+
 // ── Main App ──────────────────────────────────────────────────────────────
 export default function App() {
   const [screen, setScreen]           = useState("home");
@@ -56,7 +185,14 @@ export default function App() {
   const [search, setSearch]           = useState("");
   const [listings, setListings]       = useState(LISTINGS);
   const [selected, setSelected]       = useState(null);
-  const [days, setDays]               = useState(1);
+  const [range, setRange]             = useState({ start:null, end:null }); // selected rental dates
+  const [delivery, setDelivery]       = useState(false);
+  const [metroFilter, setMetroFilter] = useState("all");
+  const [sort, setSort]               = useState("popular"); // popular | price-asc | price-desc | rating
+  const [insuredOnly, setInsuredOnly] = useState(false);
+  const [maxPrice, setMaxPrice]       = useState(0); // 0 = any
+  const [pickupPhotos, setPickupPhotos] = useState([null, null, null]);
+  const [booking, setBooking]         = useState(null);
   const [saved, setSaved]             = useState([]);
   const [user, setUser]               = useState(null); // null = logged out
   const [showAuth, setShowAuth]       = useState(false);
@@ -65,7 +201,7 @@ export default function App() {
   const [authForm, setAuthForm]       = useState({ name:"", email:"", password:"" });
   const [verifyStep, setVerifyStep]   = useState(0); // 0=id, 1=selfie, 2=done
   const [listStep, setListStep]       = useState(0);
-  const [listForm, setListForm]       = useState({ title:"", cat:"cameras", price:"", deposit:"", desc:"", city:"Baku", rules:"" });
+  const [listForm, setListForm]       = useState(EMPTY_LIST_FORM);
   const [bookingDone, setBookingDone] = useState(false);
   const [dashTab, setDashTab]         = useState("overview"); // overview | listings | bookings | earnings | settings
   const [scrolled, setScrolled]       = useState(false);
@@ -83,11 +219,41 @@ export default function App() {
     setTimeout(() => setNotif(null), 3500);
   };
 
+  const q = search.trim().toLowerCase();
   const filtered = listings.filter(l => {
     const mc = cat === "all" || l.cat === cat;
-    const ms = l.title.toLowerCase().includes(search.toLowerCase()) || l.city.toLowerCase().includes(search.toLowerCase()) || l.cat.toLowerCase().includes(search.toLowerCase());
-    return mc && ms;
-  });
+    const ms = !q || [l.title, l.city, l.cat, l.metro || "", l.desc].some(f => f.toLowerCase().includes(q));
+    const mm = metroFilter === "all" || l.metro === metroFilter;
+    const mi = !insuredOnly || l.insured;
+    const mp = !maxPrice || l.price <= maxPrice;
+    return mc && ms && mm && mi && mp;
+  }).sort((a, b) =>
+    sort === "price-asc" ? a.price - b.price :
+    sort === "price-desc" ? b.price - a.price :
+    sort === "rating" ? b.rating - a.rating :
+    b.reviews - a.reviews
+  );
+
+  // Rental length in days (inclusive), from the picked date range.
+  const days = range.start ? dayDiff(range.start, range.end || range.start) + 1 : 1;
+
+  const openListing = item => {
+    setSelected(item);
+    setRange({ start:null, end:null });
+    setDelivery(false);
+    setScreen("listing");
+    window.scrollTo(0, 0);
+  };
+
+  const go = s => { setScreen(s); window.scrollTo(0, 0); };
+
+  // Read a picked image file into a data URL so it can be shown right away.
+  const readPhoto = (file, done) => {
+    if (!file || !file.type.startsWith("image/")) return;
+    const r = new FileReader();
+    r.onload = () => done(r.result);
+    r.readAsDataURL(file);
+  };
 
   const toggleSave = (id, e) => {
     e?.stopPropagation();
@@ -98,9 +264,16 @@ export default function App() {
 
   const handleBook = () => {
     if (!user) { setShowAuth(true); setAuthMode("signup"); return; }
-    if (!user.verified) { setScreen("verify"); return; }
+    if (!user.verified) { go("verify"); return; }
+    if (!range.start) { showNotif("Pick your dates first", "error"); return; }
+    const end = range.end || range.start;
+    const b = { item:selected, start:range.start, end, days, delivery, ...quote(selected, days, delivery) };
+    setBooking(b);
+    setListings(ls => ls.map(l => l.id === selected.id
+      ? { ...l, bookedDates:[...l.bookedDates, ...datesBetween(range.start, end)] } : l));
+    setPickupPhotos([null, null, null]);
     setBookingDone(true);
-    setScreen("booked");
+    go("booked");
     showNotif("Booking confirmed! 🎉");
   };
 
@@ -116,13 +289,13 @@ export default function App() {
   const handleVerifyDone = () => {
     setUser(u => ({ ...u, verified:true }));
     setVerifyStep(0);
-    setScreen("home");
+    go(selected ? "listing" : "home");
     showNotif("Identity verified ✓");
   };
 
   const submitListing = () => {
     const newItem = {
-      id: listings.length + 1,
+      id: Math.max(...listings.map(l=>l.id)) + 1,
       cat: listForm.cat,
       title: listForm.title,
       owner: user?.name || "You",
@@ -133,6 +306,9 @@ export default function App() {
       rating: 5.0, reviews: 0,
       color: "#1A1A2E",
       emoji: CATS.find(c=>c.id===listForm.cat)?.icon || "📦",
+      photo: listForm.photo,
+      metro: listForm.city === "Baku" ? listForm.metro : null,
+      retail: parseInt(listForm.retail) || null,
       desc: listForm.desc,
       rules: listForm.rules ? listForm.rules.split("\n").filter(Boolean) : [],
       insured: false, verified: true,
@@ -143,6 +319,47 @@ export default function App() {
     setListStep(4);
     showNotif("Item listed successfully! 🎉");
   };
+
+  // Items the signed-in user listed this session, followed by demo listings.
+  const myListings = [...listings.filter(l => user && l.owner === user.name), ...DEMO_OWNER_LISTINGS];
+
+  // ── LISTING CARD ──────────────────────────────────────────────────────────
+  const renderCard = (item, i) => (
+    <div key={item.id} className="card card-hover" onClick={()=>openListing(item)} style={{ animation:`fadeUp 0.45s ease ${Math.min(i,8)*0.04}s both`, overflow:"hidden" }}>
+      <ItemPhoto item={item} height="200px">
+        <div className="ph-shade" style={{ position:"absolute", inset:0 }} />
+        <button onClick={e=>toggleSave(item.id,e)} aria-label={saved.includes(item.id)?"Remove from saved":"Save"} style={{ position:"absolute", top:"12px", right:"12px", width:"32px", height:"32px", borderRadius:"50%", background:"rgba(255,255,255,0.92)", border:"none", cursor:"pointer", fontSize:"15px", display:"flex", alignItems:"center", justifyContent:"center" }}>
+          {saved.includes(item.id) ? "❤️" : "🤍"}
+        </button>
+        <div style={{ position:"absolute", top:"12px", left:"12px", display:"flex", gap:"4px" }}>
+          {item.verified && <span className="pill-light">✓ Verified</span>}
+        </div>
+        <div style={{ position:"absolute", bottom:"10px", left:"12px", right:"12px", display:"flex", justifyContent:"space-between", alignItems:"center", gap:"6px" }}>
+          {item.insured ? <span className="pill-green">🛡 Insured</span> : <span />}
+          {item.retail && <span className="pill-dark">New: ₼{item.retail.toLocaleString("en")}</span>}
+        </div>
+      </ItemPhoto>
+      <div style={{ padding:"14px 16px 16px" }}>
+        <div style={{ fontWeight:600, fontSize:"15px", color:"#111", marginBottom:"5px", lineHeight:1.3 }}>{item.title}</div>
+        <div style={{ fontSize:"12px", color:"#6B7280", marginBottom:"12px", display:"flex", alignItems:"center", gap:"6px", flexWrap:"wrap" }}>
+          <MetroTag station={item.metro} city={item.city} />
+          <span style={{ color:"#D1D5DB" }}>·</span>
+          <span>{item.owner}</span>
+        </div>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end" }}>
+          <div>
+            <span style={{ fontFamily:"'Fraunces',serif", fontSize:"22px", fontWeight:700, color:"#111" }}>₼{item.price}</span>
+            <span style={{ fontSize:"12px", color:"#9CA3AF" }}>/day</span>
+            <div style={{ fontSize:"11px", color:"#16A34A", fontWeight:600 }}>₼{Math.round(item.price*7*0.8)} for a week</div>
+          </div>
+          <div style={{ display:"flex", alignItems:"center", gap:"4px", fontSize:"12px", color:"#374151", fontWeight:600 }}>
+            <span style={{ color:"#F59E0B" }}>★</span>{item.rating.toFixed(1)}
+            <span style={{ color:"#9CA3AF", fontWeight:400 }}>({item.reviews})</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   // ── CSS ──────────────────────────────────────────────────────────────────
   const css = `
@@ -203,6 +420,7 @@ export default function App() {
     .cat{border:1.5px solid #E5E7EB;border-radius:100px;padding:8px 16px;background:#fff;cursor:pointer;transition:all 0.15s;white-space:nowrap;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:#374151;display:flex;align-items:center;gap:5px;}
     .cat:hover{border-color:#16A34A;background:#F0FDF4;}
     .cat.active{background:#111;color:#fff;border-color:#111;}
+    .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
 
     /* Modal overlay */
     .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn 0.2s ease;}
@@ -230,6 +448,48 @@ export default function App() {
     .searchbar input{flex:1;border:none;outline:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:14px;color:#111;}
     .searchbar input::placeholder{color:#9CA3AF;}
 
+    /* Photo pills */
+    .pill-light{background:rgba(255,255,255,0.92);border-radius:100px;padding:3px 10px;font-size:10px;font-weight:700;color:#16A34A;}
+    .pill-green{background:rgba(22,163,74,0.92);border-radius:100px;padding:3px 10px;font-size:10px;font-weight:600;color:#fff;}
+    .pill-dark{background:rgba(17,17,17,0.72);border-radius:100px;padding:3px 10px;font-size:10px;font-weight:600;color:#fff;backdrop-filter:blur(4px);}
+
+    /* Photos */
+    .ph{position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+    .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 0.5s ease;}
+    .card-hover:hover .ph img{transform:scale(1.04);}
+    .ph-shade::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.18) 0%,transparent 35%,transparent 65%,rgba(0,0,0,0.35) 100%);pointer-events:none;}
+    .ph > *:not(img){position:relative;z-index:1;}
+    .metro-m{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#E4002B;color:#fff;font-size:9px;font-weight:700;flex-shrink:0;}
+
+    /* Calendar */
+    .cal{background:#F8F7F4;border-radius:14px;padding:14px;}
+    .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+    .cal-w{font-size:10px;color:#9CA3AF;text-align:center;font-weight:600;padding-bottom:4px;}
+    .cal-day{aspect-ratio:1;border:none;background:#fff;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:#111;cursor:pointer;transition:background 0.12s;font-variant-numeric:tabular-nums;}
+    .cal-day:hover:not(:disabled){background:#DCFCE7;}
+    .cal-day:disabled{background:transparent;color:#D1D5DB;cursor:not-allowed;}
+    .cal-day.booked{text-decoration:line-through;color:#9CA3AF;background:#F3F4F6;}
+    .cal-day.today{box-shadow:inset 0 0 0 1.5px #111;}
+    .cal-day.in,.cal-day.in:hover:not(:disabled){background:#DCFCE7;color:#166534;border-radius:0;}
+    .cal-day.edge,.cal-day.edge:hover:not(:disabled){background:#16A34A;color:#fff;font-weight:700;}
+    .cal-nav{width:30px;height:30px;border-radius:50%;border:1.5px solid #E5E7EB;background:#fff;cursor:pointer;font-size:16px;}
+    .cal-nav:disabled{opacity:0.35;cursor:default;}
+    .cal-key{display:inline-block;width:10px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:4px;}
+
+    /* Toggle chips */
+    .chip{border:1.5px solid #E5E7EB;border-radius:100px;padding:7px 14px;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:#374151;transition:all 0.15s;}
+    .chip.on{background:#F0FDF4;border-color:#16A34A;color:#16A34A;}
+    .sel{border:1.5px solid #E5E7EB;border-radius:100px;padding:7px 30px 7px 14px;background:#fff;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:#374151;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239CA3AF' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
+
+    /* Photo upload slots */
+    .slot{position:relative;aspect-ratio:4/3;border:2px dashed #E5E7EB;border-radius:14px;background:#FAFAF8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;overflow:hidden;font-size:12px;color:#6B7280;transition:all 0.15s;text-align:center;padding:6px;}
+    .slot:hover{border-color:#16A34A;background:#F0FDF4;}
+    .slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+    .slot input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+
+    button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #16A34A;outline-offset:2px;}
+    @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important;}}
+
     @media(max-width:1024px){ .hero-float{display:none!important;} }
     html,body{overflow-x:hidden;}
     @media(max-width:768px){
@@ -237,6 +497,7 @@ export default function App() {
       .hide-mobile{display:none!important;}
       .show-mobile{display:flex!important;}
       .stack-mobile{grid-template-columns:1fr!important;gap:24px!important;}
+      .hero{min-height:0!important;padding-top:104px!important;padding-bottom:56px!important;}
     }
   `;
 
@@ -332,31 +593,37 @@ export default function App() {
       <Notif />
 
       {/* Hero */}
-      <div style={{ minHeight:"100vh", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"120px 24px 80px", textAlign:"center", position:"relative", overflow:"hidden" }}>
+      <div className="hero" style={{ minHeight:"min(100vh, 860px)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"120px 16px 72px", textAlign:"center", position:"relative", overflow:"hidden" }}>
         <div style={{ position:"absolute", top:"15%", left:"50%", transform:"translateX(-50%)", width:"700px", height:"700px", borderRadius:"50%", background:"radial-gradient(ellipse,rgba(22,163,74,0.07) 0%,transparent 65%)", pointerEvents:"none" }} />
 
-        {/* Floating cards */}
+        {/* Floating photo cards (desktop only) */}
         {[
-          { emoji:"📷", title:"Sony A7III", price:"₼35/day", top:"22%", left:"4%", delay:"0s" },
-          { emoji:"🚗", title:"Tesla Model 3", price:"₼80/day", top:"28%", right:"4%", delay:"1s" },
-          { emoji:"🎸", title:"Fender Strat", price:"₼20/day", bottom:"30%", left:"3%", delay:"2s" },
-          { emoji:"🚁", title:"DJI Mavic Pro", price:"₼55/day", bottom:"28%", right:"3%", delay:"0.5s" },
-        ].map((f,i)=>(
-          <div key={i} className="hero-float" style={{ position:"absolute", ...Object.fromEntries(["top","left","right","bottom"].filter(k=>f[k]).map(k=>[k,f[k]])), animation:`float 4s ease ${f.delay} infinite`, opacity:0.9, zIndex:1 }}>
-            <div className="card" style={{ padding:"12px 16px", display:"flex", alignItems:"center", gap:"10px", boxShadow:"0 4px 16px rgba(0,0,0,0.08)", borderRadius:"14px" }}>
-              <span style={{ fontSize:"22px" }}>{f.emoji}</span>
-              <div>
-                <div style={{ fontWeight:600, fontSize:"13px", color:"#111" }}>{f.title}</div>
-                <div style={{ fontSize:"12px", color:"#16A34A", fontWeight:500 }}>{f.price}</div>
+          { id:1,  top:"20%",    left:"3%",  rot:"-4deg", delay:"0s" },
+          { id:11, top:"24%",    right:"3%", rot:"3deg",  delay:"1s" },
+          { id:4,  bottom:"16%", left:"5%",  rot:"3deg",  delay:"2s" },
+          { id:5,  bottom:"14%", right:"5%", rot:"-3deg", delay:"0.5s" },
+        ].map(f=>{
+          const item = LISTINGS.find(l=>l.id===f.id);
+          return (
+            <div key={f.id} className="hero-float" onClick={()=>openListing(item)} style={{ position:"absolute", ...Object.fromEntries(["top","left","right","bottom"].filter(k=>f[k]).map(k=>[k,f[k]])), animation:`float 5s ease ${f.delay} infinite`, zIndex:1, cursor:"pointer" }}>
+              <div className="card" style={{ width:"190px", padding:"8px", boxShadow:"0 12px 32px rgba(0,0,0,0.12)", borderRadius:"18px", transform:`rotate(${f.rot})` }}>
+                <ItemPhoto item={item} height="120px" radius="12px" />
+                <div style={{ padding:"8px 4px 2px", textAlign:"left" }}>
+                  <div style={{ fontWeight:600, fontSize:"12px", color:"#111", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{item.title}</div>
+                  <div style={{ display:"flex", justifyContent:"space-between", fontSize:"11px", marginTop:"2px" }}>
+                    <span style={{ color:"#16A34A", fontWeight:700 }}>₼{item.price}/day</span>
+                    <span style={{ color:"#6B7280", display:"inline-flex" }}><MetroTag station={item.metro} city={item.city} /></span>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         <div style={{ position:"relative", zIndex:2, maxWidth:"720px" }}>
           <div style={{ display:"inline-flex", alignItems:"center", gap:"6px", background:"#DCFCE7", border:"1px solid #BBF7D0", borderRadius:"100px", padding:"6px 16px", marginBottom:"24px", animation:"fadeIn 0.6s ease" }}>
             <div style={{ width:"6px", height:"6px", borderRadius:"50%", background:"#16A34A", animation:"pulse 2s ease infinite" }} />
-            <span style={{ fontSize:"12px", fontWeight:600, color:"#16A34A" }}>Live in Baku · 4,200+ items available</span>
+            <span style={{ fontSize:"12px", fontWeight:600, color:"#16A34A" }}>Live in Baku · pick up near your metro</span>
           </div>
 
           <h1 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(44px,9vw,96px)", fontWeight:700, lineHeight:0.92, letterSpacing:"-3px", color:"#111", marginBottom:"24px", animation:"fadeUp 0.7s ease" }}>
@@ -376,8 +643,8 @@ export default function App() {
           </div>
 
           <div style={{ display:"flex", gap:"8px", justifyContent:"center", flexWrap:"wrap", animation:"fadeUp 0.7s ease 0.2s both" }}>
-            {["📷 Cameras","🚗 Cars","🏠 Spaces","🎸 Music","🚁 Drones","⛺ Outdoor"].map(tag=>(
-              <button key={tag} className="cat" onClick={()=>{ setSearch(tag.split(" ").slice(1).join(" ")); setScreen("browse"); }} style={{ fontSize:"12px", padding:"6px 12px" }}>{tag}</button>
+            {[["📷 Cameras","cameras"],["🚗 Cars","vehicles"],["🏠 Spaces","homes"],["🎸 Music","music"],["💻 Tech","tech"],["⛺ Outdoor","outdoor"]].map(([tag,id])=>(
+              <button key={tag} className="cat" onClick={()=>{ setSearch(""); setCat(id); go("browse"); }} style={{ fontSize:"12px", padding:"6px 12px" }}>{tag}</button>
             ))}
           </div>
         </div>
@@ -396,12 +663,12 @@ export default function App() {
       </div>
 
       {/* How it works */}
-      <div style={{ padding:"80px 32px", maxWidth:"1000px", margin:"0 auto" }}>
+      <div style={{ padding:"80px 16px", maxWidth:"1000px", margin:"0 auto" }}>
         <div style={{ textAlign:"center", marginBottom:"56px" }}>
           <div style={{ fontSize:"12px", fontWeight:600, color:"#16A34A", letterSpacing:"2px", textTransform:"uppercase", marginBottom:"10px" }}>Simple by design</div>
           <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(32px,5vw,52px)", fontWeight:700, letterSpacing:"-1px", color:"#111" }}>How lend. works</h2>
         </div>
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))", gap:"24px" }}>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))", gap:"16px" }}>
           {[
             { icon:"🔍", title:"Find", desc:"Browse thousands of items near you. Filter by category, price, or date." },
             { icon:"✅", title:"Verify", desc:"One-time ID check via Stripe Identity. Takes 60 seconds. Keeps everyone safe." },
@@ -419,38 +686,52 @@ export default function App() {
       </div>
 
       {/* Featured */}
-      <div style={{ padding:"0 32px 80px", maxWidth:"1200px", margin:"0 auto" }}>
+      <div style={{ padding:"0 16px 80px", maxWidth:"1200px", margin:"0 auto" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"28px" }}>
           <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, letterSpacing:"-0.5px", color:"#111" }}>Popular near you</h2>
-          <button className="btn btn-outline" onClick={()=>setScreen("browse")}>View all →</button>
+          <button className="btn btn-outline" onClick={()=>{ setCat("all"); setMetroFilter("all"); go("browse"); }}>View all →</button>
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))", gap:"16px" }}>
-          {LISTINGS.slice(0,8).map((item,i)=>(
-            <div key={item.id} className="card card-hover" onClick={()=>{ setSelected(item); setScreen("listing"); }} style={{ animationDelay:`${i*0.05}s`, animation:"fadeUp 0.5s ease both", overflow:"hidden" }}>
-              <div style={{ height:"180px", background:`linear-gradient(135deg,${item.color},${item.color}AA)`, display:"flex", alignItems:"center", justifyContent:"center", position:"relative" }}>
-                <span style={{ fontSize:"64px", filter:"drop-shadow(0 4px 12px rgba(0,0,0,0.25))" }}>{item.emoji}</span>
-                <button onClick={e=>toggleSave(item.id,e)} style={{ position:"absolute", top:"12px", right:"12px", width:"32px", height:"32px", borderRadius:"50%", background:"rgba(255,255,255,0.9)", border:"none", cursor:"pointer", fontSize:"15px", display:"flex", alignItems:"center", justifyContent:"center", backdropFilter:"blur(4px)" }}>
-                  {saved.includes(item.id) ? "❤️" : "🤍"}
-                </button>
-                {item.insured && <div style={{ position:"absolute", bottom:"10px", left:"10px", background:"rgba(22,163,74,0.9)", borderRadius:"100px", padding:"3px 10px", fontSize:"10px", fontWeight:600, color:"#fff", backdropFilter:"blur(4px)" }}>🛡 Insured</div>}
-                <div style={{ position:"absolute", top:"12px", left:"12px" }}>
-                  {item.verified && <div style={{ background:"rgba(255,255,255,0.9)", borderRadius:"100px", padding:"3px 10px", fontSize:"10px", fontWeight:600, color:"#16A34A", backdropFilter:"blur(4px)" }}>✓ Verified</div>}
-                </div>
-              </div>
-              <div style={{ padding:"16px" }}>
-                <div style={{ fontWeight:600, fontSize:"15px", color:"#111", marginBottom:"4px", lineHeight:1.3 }}>{item.title}</div>
-                <div style={{ fontSize:"12px", color:"#9CA3AF", marginBottom:"10px" }}>📍 {item.city} · {item.owner}</div>
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                  <div>
-                    <span style={{ fontFamily:"'Fraunces',serif", fontSize:"22px", fontWeight:700, color:"#111" }}>₼{item.price}</span>
-                    <span style={{ fontSize:"12px", color:"#9CA3AF" }}>/day</span>
-                  </div>
-                  <div style={{ display:"flex", alignItems:"center", gap:"4px" }}>
-                    <Stars r={item.rating} />
-                    <span style={{ fontSize:"12px", color:"#6B7280" }}>({item.reviews})</span>
-                  </div>
-                </div>
-              </div>
+          {listings.slice(0,8).map(renderCard)}
+        </div>
+      </div>
+
+      {/* Metro pickup */}
+      <div style={{ padding:"0 16px 80px", maxWidth:"1200px", margin:"0 auto" }}>
+        <div className="card" style={{ padding:"clamp(24px,4vw,40px)", display:"grid", gap:"20px" }}>
+          <div>
+            <div style={{ fontSize:"12px", fontWeight:600, color:"#E4002B", letterSpacing:"2px", textTransform:"uppercase", marginBottom:"10px", display:"flex", alignItems:"center", gap:"8px" }}><span className="metro-m">M</span> Metro pickup</div>
+            <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(26px,4vw,40px)", fontWeight:700, letterSpacing:"-0.5px", color:"#111", lineHeight:1.1, textWrap:"balance" }}>Pick it up on your way home.</h2>
+            <p style={{ fontSize:"15px", color:"#6B7280", lineHeight:1.7, marginTop:"10px", maxWidth:"560px" }}>Every Baku listing shows its nearest metro station. Choose yours and see what you can grab without a taxi.</p>
+          </div>
+          <div style={{ display:"flex", gap:"8px", flexWrap:"wrap" }}>
+            {METRO.filter(m=>listings.some(l=>l.metro===m)).map(m=>(
+              <button key={m} className="cat" onClick={()=>{ setSearch(""); setCat("all"); setMetroFilter(m); go("browse"); }}>
+                <span className="metro-m">M</span> {m}
+                <span style={{ color:"#9CA3AF", fontWeight:400 }}>{listings.filter(l=>l.metro===m).length}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* What makes LEND different */}
+      <div style={{ padding:"0 16px 80px", maxWidth:"1200px", margin:"0 auto" }}>
+        <div style={{ marginBottom:"28px" }}>
+          <div style={{ fontSize:"12px", fontWeight:600, color:"#16A34A", letterSpacing:"2px", textTransform:"uppercase", marginBottom:"10px" }}>Only on lend.</div>
+          <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(28px,4vw,44px)", fontWeight:700, letterSpacing:"-0.5px", color:"#111", lineHeight:1.1 }}>Built for renting, not just listing.</h2>
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))", gap:"16px" }}>
+          {[
+            { k:"₼", title:"Rent vs buy", desc:"Every item shows what it costs new, so you see exactly how much you save by renting." },
+            { k:"%", title:"Longer = cheaper", desc:"10% off from 3 days, 20% off from a week. Applied automatically at checkout." },
+            { k:"📸", title:"Pickup photo check", desc:"Both sides snap the item's condition at handover. Disputes get settled with photos, not arguments." },
+            { k:"🗓", title:"Live calendar", desc:"See booked days before you ask. Pick your dates and the price updates instantly." },
+          ].map((f,i)=>(
+            <div key={f.title} className="card" style={{ padding:"24px", animation:`fadeUp 0.5s ease ${i*0.06}s both` }}>
+              <div style={{ width:"44px", height:"44px", borderRadius:"12px", background:"#111", color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Fraunces',serif", fontSize:"20px", fontWeight:700, marginBottom:"16px" }}>{f.k}</div>
+              <div style={{ fontWeight:600, fontSize:"16px", color:"#111", marginBottom:"6px" }}>{f.title}</div>
+              <div style={{ fontSize:"13px", color:"#6B7280", lineHeight:1.7 }}>{f.desc}</div>
             </div>
           ))}
         </div>
@@ -527,7 +808,7 @@ export default function App() {
         </div>
         <div style={{ borderTop:"1px solid rgba(255,255,255,0.06)", paddingTop:"24px", display:"flex", justifyContent:"space-between", flexWrap:"wrap", gap:"12px" }}>
           <span style={{ fontSize:"12px", color:"rgba(255,255,255,0.2)" }}>© 2025 lend. · Baku, Azerbaijan</span>
-          <span style={{ fontSize:"12px", color:"rgba(255,255,255,0.2)" }}>Making ownership optional.</span>
+          <span style={{ fontSize:"12px", color:"rgba(255,255,255,0.2)" }}>Product photos from Unsplash</span>
         </div>
       </div>
     </div>
@@ -539,7 +820,7 @@ export default function App() {
       <Header minimal />
       {showAuth && <AuthModal />}
       <Notif />
-      <div style={{ maxWidth:"1200px", margin:"0 auto", padding:"90px 24px 60px" }}>
+      <div style={{ maxWidth:"1200px", margin:"0 auto", padding:"90px 16px 60px" }}>
         <div style={{ marginBottom:"20px" }}>
           <div className="searchbar" style={{ maxWidth:"520px" }}>
             <span style={{ fontSize:"18px", marginRight:"6px" }}>🔍</span>
@@ -552,49 +833,49 @@ export default function App() {
           {CATS.map(c=><button key={c.id} className={`cat ${cat===c.id?"active":""}`} onClick={()=>setCat(c.id)}>{c.icon} {c.label}</button>)}
         </div>
 
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"20px" }}>
-          <div style={{ fontSize:"14px", color:"#6B7280" }}><strong style={{ color:"#111" }}>{filtered.length}</strong> items{search&&` for "${search}"`}</div>
-          <div style={{ display:"flex", gap:"8px" }}>
-            <Badge label="✓ Verified only" color="#F0FDF4" text="#16A34A" />
-            <Badge label="🛡 Insured" color="#EFF6FF" text="#2563EB" />
+        {/* Filters */}
+        <div style={{ display:"flex", gap:"8px", flexWrap:"wrap", alignItems:"center", marginBottom:"16px" }}>
+          <label className="sr-only" htmlFor="f-metro">Metro station</label>
+          <select id="f-metro" className="sel" value={metroFilter} onChange={e=>setMetroFilter(e.target.value)} style={metroFilter!=="all"?{ borderColor:"#E4002B", color:"#E4002B" }:undefined}>
+            <option value="all">Ⓜ Any metro station</option>
+            {METRO.map(m=><option key={m} value={m}>Ⓜ {m}</option>)}
+          </select>
+          <label className="sr-only" htmlFor="f-price">Max price per day</label>
+          <select id="f-price" className="sel" value={maxPrice} onChange={e=>setMaxPrice(Number(e.target.value))}>
+            <option value={0}>Any price</option>
+            {[10,25,50,100].map(p=><option key={p} value={p}>Up to ₼{p}/day</option>)}
+          </select>
+          <button className={`chip ${insuredOnly?"on":""}`} onClick={()=>setInsuredOnly(v=>!v)} aria-pressed={insuredOnly}>🛡 Insured only</button>
+          <div style={{ flex:1 }} />
+          <label className="sr-only" htmlFor="f-sort">Sort by</label>
+          <select id="f-sort" className="sel" value={sort} onChange={e=>setSort(e.target.value)}>
+            <option value="popular">Most rented</option>
+            <option value="rating">Top rated</option>
+            <option value="price-asc">Price: low to high</option>
+            <option value="price-desc">Price: high to low</option>
+          </select>
+        </div>
+
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"20px", gap:"12px", flexWrap:"wrap" }}>
+          <div style={{ fontSize:"14px", color:"#6B7280" }}>
+            <strong style={{ color:"#111" }}>{filtered.length}</strong> item{filtered.length===1?"":"s"}
+            {search && <> for “{search}”</>}
+            {metroFilter!=="all" && <> near <strong style={{ color:"#111" }}>{metroFilter}</strong> metro</>}
           </div>
+          {(metroFilter!=="all"||insuredOnly||maxPrice||cat!=="all"||search) && (
+            <button className="btn btn-ghost" style={{ padding:"6px 10px", fontSize:"12px" }} onClick={()=>{ setMetroFilter("all"); setInsuredOnly(false); setMaxPrice(0); setCat("all"); setSearch(""); }}>Clear filters</button>
+          )}
         </div>
 
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))", gap:"16px" }}>
-          {filtered.map((item,i)=>(
-            <div key={item.id} className="card card-hover" onClick={()=>{ setSelected(item); setScreen("listing"); }} style={{ animationDelay:`${i*0.04}s`, animation:"fadeUp 0.4s ease both", overflow:"hidden" }}>
-              <div style={{ height:"170px", background:`linear-gradient(135deg,${item.color},${item.color}99)`, display:"flex", alignItems:"center", justifyContent:"center", position:"relative" }}>
-                <span style={{ fontSize:"60px" }}>{item.emoji}</span>
-                <button onClick={e=>toggleSave(item.id,e)} style={{ position:"absolute", top:"10px", right:"10px", width:"30px", height:"30px", borderRadius:"50%", background:"rgba(255,255,255,0.88)", border:"none", cursor:"pointer", fontSize:"14px", display:"flex", alignItems:"center", justifyContent:"center" }}>
-                  {saved.includes(item.id)?"❤️":"🤍"}
-                </button>
-                <div style={{ position:"absolute", bottom:"8px", left:"8px", display:"flex", gap:"4px" }}>
-                  {item.insured && <Badge label="🛡 Insured" color="rgba(22,163,74,0.85)" text="#fff" />}
-                </div>
-              </div>
-              <div style={{ padding:"14px" }}>
-                <div style={{ fontWeight:600, fontSize:"14px", color:"#111", marginBottom:"3px" }}>{item.title}</div>
-                <div style={{ fontSize:"12px", color:"#9CA3AF", marginBottom:"8px" }}>📍 {item.city} · {item.owner}</div>
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                  <div>
-                    <span style={{ fontFamily:"'Fraunces',serif", fontSize:"20px", fontWeight:700, color:"#111" }}>₼{item.price}</span>
-                    <span style={{ fontSize:"11px", color:"#9CA3AF" }}>/day</span>
-                  </div>
-                  <div style={{ display:"flex", alignItems:"center", gap:"3px" }}>
-                    <Stars r={item.rating} />
-                    <span style={{ fontSize:"11px", color:"#6B7280" }}>({item.reviews})</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
+          {filtered.map(renderCard)}
         </div>
 
         {filtered.length === 0 && (
-          <div style={{ textAlign:"center", padding:"80px" }}>
+          <div style={{ textAlign:"center", padding:"64px 16px" }}>
             <div style={{ fontSize:"48px", marginBottom:"16px" }}>🔍</div>
             <div style={{ fontFamily:"'Fraunces',serif", fontSize:"24px", color:"#111", marginBottom:"8px" }}>Nothing found</div>
-            <div style={{ fontSize:"14px", color:"#9CA3AF", marginBottom:"24px" }}>Be the first to list this item in Baku.</div>
+            <div style={{ fontSize:"14px", color:"#9CA3AF", marginBottom:"24px" }}>Try another metro station or clear the filters, or be the first to list it.</div>
             <button className="btn btn-green btn-lg" onClick={()=>setScreen("list")}>List it yourself</button>
           </div>
         )}
@@ -603,116 +884,157 @@ export default function App() {
   );
 
   // ── LISTING DETAIL ────────────────────────────────────────────────────────
-  if (screen === "listing" && selected) return (
+  if (screen === "listing" && selected) {
+    const item = listings.find(l=>l.id===selected.id) || selected;
+    const qt = quote(item, days, delivery);
+    const rentWeek = quote(item, 7).total;
+    const similar = listings.filter(l=>l.cat===item.cat && l.id!==item.id).slice(0,3);
+    return (
     <div style={{ minHeight:"100vh", background:BG }}><style>{css}</style>
       <Header minimal />
       {showAuth && <AuthModal />}
       <Notif />
-      <div style={{ maxWidth:"1100px", margin:"0 auto", padding:"90px 24px 60px" }}>
-        <button className="btn btn-ghost" onClick={()=>setScreen("browse")} style={{ marginBottom:"24px" }}>← Back to browse</button>
+      <div style={{ maxWidth:"1100px", margin:"0 auto", padding:"90px 16px 60px" }}>
+        <button className="btn btn-ghost" onClick={()=>go("browse")} style={{ marginBottom:"20px" }}>← Back to browse</button>
 
-        <div className="stack-mobile" style={{ display:"grid", gridTemplateColumns:"1fr 380px", gap:"48px", alignItems:"start" }}>
+        <div className="stack-mobile" style={{ display:"grid", gridTemplateColumns:"minmax(0,1fr) 380px", gap:"48px", alignItems:"start" }}>
           {/* Left */}
-          <div>
-            <div style={{ height:"380px", background:`linear-gradient(135deg,${selected.color},${selected.color}88)`, borderRadius:"24px", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:"28px", border:"1px solid rgba(255,255,255,0.08)", position:"relative" }}>
-              <span style={{ fontSize:"110px", filter:"drop-shadow(0 8px 20px rgba(0,0,0,0.3))", animation:"float 4s ease infinite" }}>{selected.emoji}</span>
-              {selected.insured && <div style={{ position:"absolute", top:"16px", left:"16px" }}><Badge label="🛡 Insured by Guardhog" color="rgba(22,163,74,0.9)" text="#fff" /></div>}
-              {selected.verified && <div style={{ position:"absolute", top:"16px", right:"16px" }}><Badge label="✓ Verified item" color="rgba(255,255,255,0.9)" text="#16A34A" /></div>}
+          <div style={{ minWidth:0 }}>
+            <ItemPhoto item={item} height="clamp(260px,45vw,440px)" radius="24px" emojiSize={110}>
+              <div className="ph-shade" style={{ position:"absolute", inset:0 }} />
+              {item.insured && <div style={{ position:"absolute", top:"16px", left:"16px" }}><span className="pill-green" style={{ fontSize:"11px" }}>🛡 Insured by Guardhog</span></div>}
+              {item.verified && <div style={{ position:"absolute", top:"16px", right:"16px" }}><span className="pill-light" style={{ fontSize:"11px" }}>✓ Verified item</span></div>}
+            </ItemPhoto>
+
+            <div style={{ display:"flex", gap:"8px", margin:"24px 0 16px", flexWrap:"wrap" }}>
+              <Badge label={item.availability} color={item.availability==="Available now"?"#DCFCE7":"#FEF3C7"} text={item.availability==="Available now"?"#16A34A":"#D97706"} />
+              <Badge label={CATS.find(c=>c.id===item.cat)?.label || ""} color="#EFF6FF" text="#2563EB" />
+              {item.deposit > 0 && <Badge label={`₼${item.deposit} deposit`} color="#FDF4FF" text="#7C3AED" />}
             </div>
 
-            <div style={{ display:"flex", gap:"8px", marginBottom:"20px", flexWrap:"wrap" }}>
-              <Badge label={selected.availability} color={selected.availability==="Available now"?"#DCFCE7":"#FEF3C7"} text={selected.availability==="Available now"?"#16A34A":"#D97706"} />
-              <Badge label={CATS.find(c=>c.id===selected.cat)?.label || ""} color="#EFF6FF" text="#2563EB" />
-              {selected.deposit > 0 && <Badge label={`₼${selected.deposit} deposit`} color="#FDF4FF" text="#7C3AED" />}
+            <h1 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(28px,4vw,38px)", fontWeight:700, letterSpacing:"-0.5px", color:"#111", marginBottom:"8px", lineHeight:1.1, textWrap:"balance" }}>{item.title}</h1>
+            <div style={{ fontSize:"14px", color:"#6B7280", marginBottom:"20px", display:"flex", gap:"8px", alignItems:"center", flexWrap:"wrap" }}>
+              {item.metro ? <>Pickup near <MetroTag station={item.metro} city={item.city} /> metro, {item.city}</> : <>📍 Pickup in {item.city}</>}
             </div>
 
-            <h1 style={{ fontFamily:"'Fraunces',serif", fontSize:"36px", fontWeight:700, letterSpacing:"-0.5px", color:"#111", marginBottom:"8px" }}>{selected.title}</h1>
-            <div style={{ fontSize:"14px", color:"#6B7280", marginBottom:"16px" }}>📍 {selected.city}</div>
+            {/* Rent vs buy */}
+            {item.retail && (
+              <div className="card" style={{ padding:"20px", marginBottom:"24px", display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))", gap:"16px", alignItems:"center" }}>
+                <div>
+                  <div style={{ fontSize:"11px", fontWeight:600, color:"#9CA3AF", textTransform:"uppercase", letterSpacing:"1px", marginBottom:"4px" }}>Buying new</div>
+                  <div style={{ fontFamily:"'Fraunces',serif", fontSize:"26px", fontWeight:700, color:"#9CA3AF", textDecoration:"line-through", fontVariantNumeric:"tabular-nums" }}>₼{item.retail.toLocaleString("en")}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize:"11px", fontWeight:600, color:"#16A34A", textTransform:"uppercase", letterSpacing:"1px", marginBottom:"4px" }}>Renting for a week</div>
+                  <div style={{ fontFamily:"'Fraunces',serif", fontSize:"26px", fontWeight:700, color:"#111", fontVariantNumeric:"tabular-nums" }}>₼{rentWeek}</div>
+                </div>
+                <div style={{ background:"#F0FDF4", borderRadius:"12px", padding:"12px 14px", fontSize:"13px", color:"#166534", lineHeight:1.5 }}>
+                  You save <strong>₼{(item.retail - rentWeek).toLocaleString("en")}</strong>. That's {Math.round((1 - rentWeek/item.retail)*100)}% less than buying.
+                </div>
+              </div>
+            )}
 
             {/* Owner */}
-            <div className="card" style={{ padding:"16px 20px", marginBottom:"24px", display:"flex", alignItems:"center", gap:"14px" }}>
-              <Avatar name={selected.owner} size={48} bg="#16A34A" />
-              <div style={{ flex:1 }}>
-                <div style={{ fontWeight:600, fontSize:"15px", color:"#111" }}>{selected.owner}</div>
-                <div style={{ fontSize:"12px", color:"#9CA3AF" }}>Member since {selected.ownerJoined} · {selected.reviews} rentals</div>
+            <div className="card" style={{ padding:"16px 20px", marginBottom:"28px", display:"flex", alignItems:"center", gap:"14px" }}>
+              <Avatar name={item.owner} size={48} bg="#16A34A" />
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontWeight:600, fontSize:"15px", color:"#111" }}>{item.owner}</div>
+                <div style={{ fontSize:"12px", color:"#9CA3AF" }}>Member since {item.ownerJoined} · {item.reviews} rentals · replies in ~1 hr</div>
               </div>
               <div style={{ textAlign:"right" }}>
-                <Stars r={selected.ownerRating} />
-                <div style={{ fontSize:"12px", color:"#6B7280" }}>{selected.ownerRating} rating</div>
+                <Stars r={item.ownerRating} />
+                <div style={{ fontSize:"12px", color:"#6B7280" }}>{item.ownerRating} rating</div>
               </div>
             </div>
 
             <h3 style={{ fontFamily:"'Fraunces',serif", fontSize:"22px", fontWeight:600, color:"#111", marginBottom:"12px" }}>About this item</h3>
-            <p style={{ fontSize:"15px", color:"#374151", lineHeight:1.8, marginBottom:"28px" }}>{selected.desc}</p>
+            <p style={{ fontSize:"15px", color:"#374151", lineHeight:1.8, marginBottom:"28px", maxWidth:"65ch" }}>{item.desc}</p>
 
             {/* Rules */}
-            <h3 style={{ fontFamily:"'Fraunces',serif", fontSize:"22px", fontWeight:600, color:"#111", marginBottom:"12px" }}>Rental rules</h3>
-            <div className="card" style={{ padding:"20px", marginBottom:"28px" }}>
-              {selected.rules?.map((r,i)=>(
-                <div key={i} style={{ display:"flex", gap:"10px", alignItems:"center", marginBottom:"10px", fontSize:"14px", color:"#374151" }}>
-                  <span style={{ color:"#16A34A", fontWeight:700 }}>·</span> {r}
-                </div>
-              ))}
-            </div>
+            {item.rules?.length > 0 && <>
+              <h3 style={{ fontFamily:"'Fraunces',serif", fontSize:"22px", fontWeight:600, color:"#111", marginBottom:"12px" }}>Rental rules</h3>
+              <div className="card" style={{ padding:"20px", marginBottom:"28px" }}>
+                {item.rules.map((r,i)=>(
+                  <div key={i} style={{ display:"flex", gap:"10px", alignItems:"center", marginBottom: i<item.rules.length-1?"10px":0, fontSize:"14px", color:"#374151" }}>
+                    <span style={{ color:"#16A34A", fontWeight:700 }}>✓</span> {r}
+                  </div>
+                ))}
+              </div>
+            </>}
 
             {/* Insurance details */}
-            {selected.insured && (
-              <div style={{ background:"#F0FDF4", border:"1px solid #BBF7D0", borderRadius:"16px", padding:"20px" }}>
+            {item.insured && (
+              <div style={{ background:"#F0FDF4", border:"1px solid #BBF7D0", borderRadius:"16px", padding:"20px", marginBottom:"28px" }}>
                 <div style={{ fontWeight:600, fontSize:"14px", color:"#166534", marginBottom:"10px" }}>🛡 This item is insured</div>
                 <div style={{ fontSize:"13px", color:"#166534", lineHeight:1.7 }}>
-                  Covered up to ₼50,000 per rental through our Guardhog partnership. If anything goes wrong, both renter and owner are fully protected. Deposit is held securely by Stripe and returned automatically upon safe return.
+                  Covered up to ₼50,000 per rental through our Guardhog partnership. At pickup, you and the owner both photograph the item, so any damage claim is settled from photos. The deposit is held by Stripe and returned automatically after a safe return.
                 </div>
               </div>
             )}
+
+            {similar.length > 0 && <>
+              <h3 style={{ fontFamily:"'Fraunces',serif", fontSize:"22px", fontWeight:600, color:"#111", marginBottom:"12px" }}>Similar items</h3>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))", gap:"14px" }}>
+                {similar.map(renderCard)}
+              </div>
+            </>}
           </div>
 
           {/* Booking card */}
-          <div style={{ position:"sticky", top:"100px" }}>
-            <div className="card" style={{ padding:"28px", boxShadow:"0 8px 32px rgba(0,0,0,0.08)" }}>
-              <div style={{ display:"flex", alignItems:"baseline", gap:"4px", marginBottom:"6px" }}>
-                <span style={{ fontFamily:"'Fraunces',serif", fontSize:"40px", fontWeight:700, color:"#111" }}>₼{selected.price}</span>
+          <div style={{ position:"sticky", top:"90px" }}>
+            <div className="card" style={{ padding:"24px", boxShadow:"0 8px 32px rgba(0,0,0,0.08)" }}>
+              <div style={{ display:"flex", alignItems:"baseline", gap:"4px", marginBottom:"4px" }}>
+                <span style={{ fontFamily:"'Fraunces',serif", fontSize:"40px", fontWeight:700, color:"#111" }}>₼{item.price}</span>
                 <span style={{ fontSize:"14px", color:"#9CA3AF" }}>/ day</span>
               </div>
-              <div style={{ display:"flex", alignItems:"center", gap:"4px", marginBottom:"24px" }}>
-                <Stars r={selected.rating} />
-                <span style={{ fontSize:"13px", color:"#6B7280" }}>{selected.rating} · {selected.reviews} reviews</span>
+              <div style={{ display:"flex", alignItems:"center", gap:"4px", marginBottom:"18px" }}>
+                <Stars r={item.rating} />
+                <span style={{ fontSize:"13px", color:"#6B7280" }}>{item.rating} · {item.reviews} reviews</span>
               </div>
 
-              {/* Days selector */}
-              <div style={{ marginBottom:"16px" }}>
-                <label style={{ fontSize:"12px", fontWeight:600, color:"#374151", display:"block", marginBottom:"10px", textTransform:"uppercase", letterSpacing:"0.5px" }}>Duration</label>
-                <div style={{ display:"flex", alignItems:"center", gap:"14px", justifyContent:"center", background:"#F8F7F4", borderRadius:"12px", padding:"12px" }}>
-                  <button onClick={()=>setDays(d=>Math.max(1,d-1))} style={{ width:"32px", height:"32px", borderRadius:"50%", border:"1.5px solid #E5E7EB", background:"#fff", cursor:"pointer", fontSize:"18px", fontWeight:600, display:"flex", alignItems:"center", justifyContent:"center" }}>−</button>
-                  <div style={{ textAlign:"center" }}>
-                    <span style={{ fontFamily:"'Fraunces',serif", fontSize:"28px", fontWeight:700, color:"#111" }}>{days}</span>
-                    <div style={{ fontSize:"11px", color:"#9CA3AF" }}>day{days>1?"s":""}</div>
-                  </div>
-                  <button onClick={()=>setDays(d=>d+1)} style={{ width:"32px", height:"32px", borderRadius:"50%", border:"1.5px solid #E5E7EB", background:"#fff", cursor:"pointer", fontSize:"18px", fontWeight:600, display:"flex", alignItems:"center", justifyContent:"center" }}>+</button>
-                </div>
+              <div style={{ fontSize:"12px", fontWeight:600, color:"#374151", marginBottom:"8px", textTransform:"uppercase", letterSpacing:"0.5px", display:"flex", justifyContent:"space-between" }}>
+                <span>Your dates</span>
+                <span style={{ color: range.start ? "#16A34A" : "#9CA3AF", textTransform:"none", letterSpacing:0 }}>
+                  {range.start ? `${fmtRange(range.start, range.end||range.start)} · ${days} day${days>1?"s":""}` : "Tap a start date"}
+                </span>
+              </div>
+              <RangeCalendar booked={item.bookedDates} range={range} onChange={setRange} />
+              {range.start && !range.end && <div style={{ fontSize:"12px", color:"#6B7280", marginTop:"8px" }}>Tap an end date, or book just this one day.</div>}
+
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px", margin:"14px 0" }}>
+                {[[false,"Pick up", item.metro ? `${item.metro} metro` : item.city],[true,"Delivery", `+₼${DELIVERY_FEE} to your door`]].map(([v,l,sub])=>(
+                  <button key={l} type="button" onClick={()=>setDelivery(v)} aria-pressed={delivery===v}
+                    style={{ textAlign:"left", padding:"10px 12px", borderRadius:"12px", border:`1.5px solid ${delivery===v?"#16A34A":"#E5E7EB"}`, background: delivery===v?"#F0FDF4":"#fff", cursor:"pointer", fontFamily:"'DM Sans',sans-serif" }}>
+                    <div style={{ fontSize:"13px", fontWeight:600, color:"#111" }}>{l}</div>
+                    <div style={{ fontSize:"11px", color:"#6B7280" }}>{sub}</div>
+                  </button>
+                ))}
               </div>
 
               {/* Price breakdown */}
-              <div style={{ background:"#F8F7F4", borderRadius:"12px", padding:"16px", marginBottom:"20px" }}>
+              <div style={{ background:"#F8F7F4", borderRadius:"12px", padding:"16px", marginBottom:"16px", fontVariantNumeric:"tabular-nums" }}>
                 {[
-                  [`₼${selected.price} × ${days} day${days>1?"s":""}`, `₼${selected.price * days}`],
-                  ["Service fee (10%)", `₼${Math.round(selected.price * days * 0.1)}`],
-                  ["Insurance", "₼5"],
-                  ...(selected.deposit > 0 ? [[`Security deposit (refundable)`, `₼${selected.deposit}`]] : []),
-                ].map(([l,v])=>(
-                  <div key={l} style={{ display:"flex", justifyContent:"space-between", fontSize:"13px", color:"#374151", marginBottom:"8px" }}>
+                  [`₼${item.price} × ${days} day${days>1?"s":""}`, `₼${qt.base}`],
+                  ...(qt.discount ? [[`${days>=7?"Weekly":"3+ day"} discount (${discountRate(days)*100}%)`, `−₼${qt.discount}`, true]] : []),
+                  ["Service fee (10%)", `₼${qt.fee}`],
+                  ...(qt.insurance ? [["Insurance", `₼${qt.insurance}`]] : []),
+                  ...(delivery ? [["Delivery", `₼${qt.deliveryFee}`]] : []),
+                ].map(([l,v,green])=>(
+                  <div key={l} style={{ display:"flex", justifyContent:"space-between", fontSize:"13px", color: green?"#16A34A":"#374151", marginBottom:"8px", fontWeight: green?600:400 }}>
                     <span>{l}</span><span style={{ fontWeight:500 }}>{v}</span>
                   </div>
                 ))}
                 <div style={{ height:"1px", background:"#E5E7EB", margin:"12px 0" }} />
                 <div style={{ display:"flex", justifyContent:"space-between", fontSize:"15px", fontWeight:700, color:"#111" }}>
                   <span>Due now</span>
-                  <span>₼{selected.price * days + Math.round(selected.price * days * 0.1) + 5}</span>
+                  <span>₼{qt.total}</span>
                 </div>
-                {selected.deposit > 0 && <div style={{ fontSize:"11px", color:"#9CA3AF", marginTop:"4px", textAlign:"right" }}>+ ₼{selected.deposit} deposit (returned on safe return)</div>}
+                {item.deposit > 0 && <div style={{ fontSize:"11px", color:"#9CA3AF", marginTop:"4px", textAlign:"right" }}>+ ₼{item.deposit} deposit, held and returned after a safe return</div>}
+                {!qt.discount && <div style={{ fontSize:"11px", color:"#16A34A", marginTop:"6px" }}>Book 3+ days for 10% off, or a week for 20% off.</div>}
               </div>
 
               <button className="btn btn-green btn-lg btn-full" onClick={handleBook} style={{ marginBottom:"10px" }}>
-                {user ? (user.verified ? `Book now` : "Verify ID to book") : "Sign up to book"}
+                {!user ? "Sign up to book" : !user.verified ? "Verify ID to book" : range.start ? `Book ${days} day${days>1?"s":""} · ₼${qt.total}` : "Pick dates to book"}
               </button>
 
               {!user?.verified && user && (
@@ -721,13 +1043,14 @@ export default function App() {
                 </div>
               )}
 
-              <div style={{ textAlign:"center", fontSize:"12px", color:"#9CA3AF" }}>Free cancellation · Secure payment · Deposit returned</div>
+              <div style={{ textAlign:"center", fontSize:"12px", color:"#9CA3AF" }}>Free cancellation up to 24h before · Secure payment</div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  );
+    );
+  }
 
   // ── VERIFY IDENTITY ───────────────────────────────────────────────────────
   if (screen === "verify") return (
@@ -796,39 +1119,70 @@ export default function App() {
   );
 
   // ── BOOKED ────────────────────────────────────────────────────────────────
-  if (screen === "booked") return (
-    <div style={{ minHeight:"100vh", background:BG, display:"flex", alignItems:"center", justifyContent:"center" }}><style>{css}</style>
+  if (screen === "booked" && booking) {
+    const b = booking;
+    const shots = pickupPhotos.filter(Boolean).length;
+    return (
+    <div style={{ minHeight:"100vh", background:BG }}><style>{css}</style>
+      <Header minimal />
       <Notif />
-      <div style={{ textAlign:"center", padding:"40px 32px", maxWidth:"480px" }}>
-        <div style={{ width:"88px", height:"88px", borderRadius:"50%", background:"#DCFCE7", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 24px", fontSize:"40px", animation:"pop 0.5s cubic-bezier(0.34,1.56,0.64,1)" }}>✓</div>
-        <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"40px", fontWeight:700, color:"#111", marginBottom:"10px" }}>Booking confirmed!</h2>
-        <p style={{ fontSize:"16px", color:"#6B7280", marginBottom:"6px" }}>
-          <strong style={{ color:"#111" }}>{selected?.owner}</strong> will confirm within 2 hours.
-        </p>
-        <p style={{ fontSize:"14px", color:"#9CA3AF", marginBottom:"8px" }}>You'll receive pickup details by message.</p>
+      <div style={{ maxWidth:"560px", margin:"0 auto", padding:"96px 16px 60px" }}>
+        <div style={{ textAlign:"center" }}>
+          <div style={{ width:"80px", height:"80px", borderRadius:"50%", background:"#DCFCE7", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 20px", fontSize:"36px", color:"#16A34A", animation:"pop 0.5s cubic-bezier(0.34,1.56,0.64,1)" }}>✓</div>
+          <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(30px,6vw,40px)", fontWeight:700, color:"#111", marginBottom:"10px" }}>Booking confirmed!</h2>
+          <p style={{ fontSize:"16px", color:"#6B7280" }}>
+            <strong style={{ color:"#111" }}>{b.item.owner}</strong> will confirm within 2 hours and message you {b.delivery ? "a delivery time" : "the exact pickup spot"}.
+          </p>
+        </div>
 
-        <div className="card" style={{ padding:"20px", margin:"24px 0", textAlign:"left" }}>
-          {[
-            ["Item", selected?.title],
-            ["Duration", `${days} day${days>1?"s":""}`],
-            ["Total paid", `₼${selected ? selected.price * days + Math.round(selected.price * days * 0.1) + 5 : 0}`],
-            ["Deposit held", `₼${selected?.deposit || 0} (returned on safe return)`],
-            ["Insurance", "Covered by Guardhog"],
-          ].map(([l,v])=>(
-            <div key={l} style={{ display:"flex", justifyContent:"space-between", fontSize:"14px", padding:"8px 0", borderBottom:"1px solid #F8F7F4" }}>
-              <span style={{ color:"#9CA3AF" }}>{l}</span>
-              <span style={{ fontWeight:500, color:"#111", textAlign:"right", maxWidth:"60%" }}>{v}</span>
-            </div>
-          ))}
+        <div className="card" style={{ overflow:"hidden", margin:"24px 0" }}>
+          <ItemPhoto item={b.item} height="140px" />
+          <div style={{ padding:"8px 20px 12px", fontVariantNumeric:"tabular-nums" }}>
+            {[
+              ["Item", b.item.title],
+              ["Dates", `${fmtRange(b.start, b.end)} · ${b.days} day${b.days>1?"s":""}`],
+              ["Handover", b.delivery ? "Delivered to your door" : b.item.metro ? `Pickup near ${b.item.metro} metro` : `Pickup in ${b.item.city}`],
+              ...(b.discount ? [["Discount", `−₼${b.discount}`]] : []),
+              ["Total paid", `₼${b.total}`],
+              ["Deposit held", b.item.deposit ? `₼${b.item.deposit}, returned after a safe return` : "None"],
+            ].map(([l,v])=>(
+              <div key={l} style={{ display:"flex", justifyContent:"space-between", gap:"16px", fontSize:"14px", padding:"9px 0", borderBottom:"1px solid #F3F2EF" }}>
+                <span style={{ color:"#9CA3AF", flexShrink:0 }}>{l}</span>
+                <span style={{ fontWeight:500, color:"#111", textAlign:"right" }}>{v}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Pickup photo check */}
+        <div className="card" style={{ padding:"20px", marginBottom:"24px" }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", gap:"8px", marginBottom:"6px" }}>
+            <div style={{ fontWeight:700, fontSize:"16px", color:"#111" }}>📸 Pickup photo check</div>
+            <div style={{ fontSize:"12px", fontWeight:600, color: shots===3?"#16A34A":"#9CA3AF" }}>{shots}/3</div>
+          </div>
+          <p style={{ fontSize:"13px", color:"#6B7280", lineHeight:1.6, marginBottom:"14px" }}>
+            When you get the item, take 3 photos of its condition. The owner sees them too, so nobody can blame you for damage that was already there.
+          </p>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"8px" }}>
+            {["Front","Back","Any marks"].map((label,i)=>(
+              <label key={label} className="slot" style={pickupPhotos[i]?{ borderStyle:"solid", borderColor:"#16A34A" }:undefined}>
+                {pickupPhotos[i] ? <img src={pickupPhotos[i]} alt={`${label} photo`} /> : <><span style={{ fontSize:"22px" }}>＋</span>{label}</>}
+                <input type="file" accept="image/*" capture="environment" aria-label={`Add ${label} photo`}
+                  onChange={e=>readPhoto(e.target.files?.[0], url=>setPickupPhotos(ps=>ps.map((p,j)=>j===i?url:p)))} />
+              </label>
+            ))}
+          </div>
+          {shots===3 && <div style={{ marginTop:"12px", background:"#F0FDF4", borderRadius:"10px", padding:"10px 12px", fontSize:"12px", color:"#166534" }}>✓ Condition recorded and shared with {b.item.owner}.</div>}
         </div>
 
         <div style={{ display:"flex", flexDirection:"column", gap:"10px" }}>
-          <button className="btn btn-green btn-lg btn-full" onClick={()=>setScreen("browse")}>Browse more items</button>
-          <button className="btn btn-outline btn-lg btn-full" onClick={()=>{ setDashTab("bookings"); setScreen("dashboard"); }}>View my bookings</button>
+          <button className="btn btn-green btn-lg btn-full" onClick={()=>go("browse")}>Browse more items</button>
+          <button className="btn btn-outline btn-lg btn-full" onClick={()=>{ setDashTab("bookings"); go("dashboard"); }}>View my bookings</button>
         </div>
       </div>
     </div>
-  );
+    );
+  }
 
   // ── LIST AN ITEM ──────────────────────────────────────────────────────────
   if (screen === "list") return (
@@ -874,8 +1228,29 @@ export default function App() {
                     </select>
                   </div>
                   <div>
-                    <label style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>City *</label>
-                    <input className="inp" placeholder="e.g. Baku" value={listForm.city} onChange={e=>setListForm(f=>({...f,city:e.target.value}))} />
+                    <label htmlFor="l-city" style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>City *</label>
+                    <select id="l-city" className="inp" value={listForm.city} onChange={e=>setListForm(f=>({...f,city:e.target.value}))}>
+                      {["Baku","Sumqayit","Ganja","Lankaran","Mingachevir","Shaki","Quba"].map(c=><option key={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  {listForm.city === "Baku" && (
+                    <div>
+                      <label htmlFor="l-metro" style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>Nearest metro station for pickup</label>
+                      <select id="l-metro" className="inp" value={listForm.metro} onChange={e=>setListForm(f=>({...f,metro:e.target.value}))}>
+                        {METRO.map(m=><option key={m}>{m}</option>)}
+                      </select>
+                      <div style={{ fontSize:"12px", color:"#9CA3AF", marginTop:"6px" }}>Renters filter by metro. Listings with a station get more bookings.</div>
+                    </div>
+                  )}
+                  <div>
+                    <div style={{ fontSize:"13px", fontWeight:600, color:"#374151", marginBottom:"8px" }}>Photo</div>
+                    <label className="slot" style={{ aspectRatio:"16/9", ...(listForm.photo?{ borderStyle:"solid", borderColor:"#16A34A" }:{}) }}>
+                      {listForm.photo
+                        ? <img src={listForm.photo} alt="Your item" />
+                        : <><span style={{ fontSize:"28px" }}>📷</span><strong style={{ color:"#111" }}>Add a photo of your item</strong><span>Listings with a real photo get 3x more bookings</span></>}
+                      <input type="file" accept="image/*" aria-label="Add a photo of your item" onChange={e=>readPhoto(e.target.files?.[0], url=>setListForm(f=>({...f,photo:url})))} />
+                    </label>
+                    {listForm.photo && <button className="btn btn-ghost" style={{ marginTop:"6px", fontSize:"12px", padding:"6px 10px" }} onClick={()=>setListForm(f=>({...f,photo:null}))}>Remove photo</button>}
                   </div>
                 </div>
               </div>
@@ -903,6 +1278,26 @@ export default function App() {
                 <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"6px" }}>Set your price</h2>
                 <p style={{ fontSize:"15px", color:"#6B7280", marginBottom:"28px" }}>You keep 90%. We take 10% to cover insurance and platform costs.</p>
                 <div style={{ display:"flex", flexDirection:"column", gap:"14px" }}>
+                  <div>
+                    <label htmlFor="l-retail" style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>What would it cost to buy new? (₼)</label>
+                    <div style={{ position:"relative" }}>
+                      <div style={{ position:"absolute", left:"16px", top:"50%", transform:"translateY(-50%)", fontFamily:"'Fraunces',serif", fontSize:"20px", color:"#6B7280", pointerEvents:"none" }}>₼</div>
+                      <input id="l-retail" className="inp" style={{ paddingLeft:"34px", fontSize:"20px", fontFamily:"'Fraunces',serif" }} placeholder="0" type="number" min="0" value={listForm.retail} onChange={e=>setListForm(f=>({...f,retail:e.target.value}))} />
+                    </div>
+                    {parseInt(listForm.retail) > 0 && (() => {
+                      const sug = Math.max(3, Math.round(parseInt(listForm.retail) * 0.03));
+                      const dep = Math.round(parseInt(listForm.retail) * 0.1 / 10) * 10;
+                      return (
+                        <div style={{ marginTop:"10px", background:"#111", color:"#fff", borderRadius:"14px", padding:"14px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:"12px", flexWrap:"wrap" }}>
+                          <div style={{ fontSize:"13px", lineHeight:1.5 }}>
+                            <div style={{ fontWeight:600 }}>Suggested: ₼{sug}/day, ₼{dep} deposit</div>
+                            <div style={{ color:"rgba(255,255,255,0.55)", fontSize:"12px" }}>Similar items in Baku rent for about 3% of their price per day.</div>
+                          </div>
+                          <button className="btn btn-green" onClick={()=>setListForm(f=>({...f,price:String(sug),deposit:String(dep)}))}>Use these</button>
+                        </div>
+                      );
+                    })()}
+                  </div>
                   <div>
                     <label style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>Daily price (₼) *</label>
                     <div style={{ position:"relative" }}>
@@ -942,13 +1337,13 @@ export default function App() {
                 <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"6px" }}>Review your listing</h2>
                 <p style={{ fontSize:"15px", color:"#6B7280", marginBottom:"28px" }}>Looks good? Hit publish.</p>
                 <div className="card" style={{ padding:"24px", marginBottom:"20px" }}>
-                  <div style={{ height:"140px", background:"linear-gradient(135deg,#1A1A2E,#2A2A4E)", borderRadius:"14px", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:"16px", fontSize:"56px" }}>
-                    {CATS.find(c=>c.id===listForm.cat)?.icon || "📦"}
+                  <div style={{ marginBottom:"16px" }}>
+                    <ItemPhoto item={{ title:listForm.title, photo:listForm.photo, color:"#1A1A2E", emoji:CATS.find(c=>c.id===listForm.cat)?.icon || "📦" }} height="180px" radius="14px" />
                   </div>
                   {[
                     ["Title", listForm.title || "—"],
                     ["Category", CATS.find(c=>c.id===listForm.cat)?.label],
-                    ["City", listForm.city],
+                    ["Pickup", listForm.city === "Baku" ? `${listForm.metro} metro, Baku` : listForm.city],
                     ["Daily price", listForm.price ? `₼${listForm.price}` : "—"],
                     ["Deposit", listForm.deposit ? `₼${listForm.deposit}` : "None"],
                   ].map(([l,v])=>(
@@ -984,7 +1379,7 @@ export default function App() {
             <p style={{ fontSize:"14px", color:"#9CA3AF", marginBottom:"32px" }}>You'll get notified when someone books.</p>
             <div style={{ display:"flex", flexDirection:"column", gap:"10px" }}>
               <button className="btn btn-green btn-lg btn-full" onClick={()=>{ setDashTab("listings"); setScreen("dashboard"); }}>Manage in dashboard</button>
-              <button className="btn btn-outline btn-lg btn-full" onClick={()=>{ setListStep(0); setListForm({ title:"", cat:"cameras", price:"", deposit:"", desc:"", city:"Baku", rules:"" }); }}>List another item</button>
+              <button className="btn btn-outline btn-lg btn-full" onClick={()=>{ setListStep(0); setListForm(EMPTY_LIST_FORM); }}>List another item</button>
             </div>
           </div>
         )}
@@ -1053,7 +1448,7 @@ export default function App() {
               <div className="stack-mobile" style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"14px", marginBottom:"28px" }}>
                 {[
                   { label:"Active bookings", value:"1", icon:"📅", color:"#EFF6FF" },
-                  { label:"Items listed", value:`${OWNER_LISTINGS.length}`, icon:"📦", color:"#F0FDF4" },
+                  { label:"Items listed", value:`${myListings.length}`, icon:"📦", color:"#F0FDF4" },
                   { label:"Total earned", value:"₼117", icon:"💰", color:"#FEF3C7" },
                 ].map(s=>(
                   <div key={s.label} className="card" style={{ padding:"20px", background:s.color, border:"none" }}>
@@ -1118,12 +1513,12 @@ export default function App() {
                 <button className="btn btn-green" onClick={()=>setScreen("list")}>+ Add item</button>
               </div>
               <div style={{ display:"flex", flexDirection:"column", gap:"12px" }}>
-                {OWNER_LISTINGS.map(item=>(
+                {myListings.map(item=>(
                   <div key={item.id} className="card" style={{ padding:"18px 20px", display:"flex", alignItems:"center", gap:"16px" }}>
-                    <div style={{ width:"56px", height:"56px", borderRadius:"14px", background:`linear-gradient(135deg,${item.color},${item.color}88)`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"26px", flexShrink:0 }}>{item.emoji}</div>
+                    <div style={{ width:"64px", flexShrink:0 }}><ItemPhoto item={item} height="56px" radius="12px" emojiSize={26} /></div>
                     <div style={{ flex:1 }}>
                       <div style={{ fontWeight:600, fontSize:"15px", color:"#111", marginBottom:"3px" }}>{item.title}</div>
-                      <div style={{ fontSize:"12px", color:"#9CA3AF" }}>📍 {item.city} · ₼{item.price}/day · {item.reviews} reviews</div>
+                      <div style={{ fontSize:"12px", color:"#9CA3AF", display:"flex", gap:"6px", flexWrap:"wrap", alignItems:"center" }}><MetroTag station={item.metro} city={item.city} /> · ₼{item.price}/day · {item.reviews} reviews</div>
                     </div>
                     <div style={{ textAlign:"right", display:"flex", flexDirection:"column", gap:"6px", alignItems:"flex-end" }}>
                       <Badge label={item.availability} color="#DCFCE7" text="#16A34A" />
