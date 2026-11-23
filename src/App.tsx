@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 // ── Constants ─────────────────────────────────────────────────────────────
 const CATS = [
   { id:"all",      label:"All",         icon:"◈" },
+  { id:"kits",     label:"Ready kits",  icon:"🎁" },
   { id:"cameras",  label:"Cameras",     icon:"📷" },
   { id:"tools",    label:"Tools",       icon:"🔧" },
   { id:"sports",   label:"Sports",      icon:"⚽" },
@@ -10,6 +11,7 @@ const CATS = [
   { id:"travel",   label:"Travel",      icon:"🎒" },
   { id:"tech",     label:"Tech",        icon:"💻" },
   { id:"events",   label:"Events",      icon:"🎉" },
+  { id:"fashion",  label:"Fashion",     icon:"👔" },
   { id:"outdoor",  label:"Outdoor",     icon:"⛺" },
   { id:"vehicles", label:"Vehicles",    icon:"🚗" },
   { id:"homes",    label:"Spaces",      icon:"🏠" },
@@ -30,16 +32,21 @@ import tesla from "./photos/tesla.jpg";
 import studio from "./photos/studio.jpg";
 import jbl from "./photos/jbl.jpg";
 import nikon from "./photos/nikon.jpg";
+import ps5 from "./photos/ps5.jpg";
+import nswitch from "./photos/switch.jpg";
+import projector from "./photos/projector.jpg";
+import bike from "./photos/bike.jpg";
+import ski from "./photos/ski.jpg";
+import snowboard from "./photos/snowboard.jpg";
+import canon from "./photos/canon.jpg";
+import suit from "./photos/suit.jpg";
+import dress from "./photos/dress.jpg";
+import vr from "./photos/vr.jpg";
+import fiat from "./photos/fiat.jpg";
+import tables from "./photos/tables.jpg";
+import mangal from "./photos/mangal.jpg";
 
-import { AZ } from "./i18n";
-
-// ── Language ──────────────────────────────────────────────────────────────
-// English text is the key; AZ maps it to Azerbaijani. {name} placeholders get filled from vars.
-let LANG = "az";
-const fill = (s, v) => v ? s.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? "") : s;
-const t = (s, v?) => fill(LANG === "az" && AZ[s] != null ? AZ[s] : s, v);
-const daysLabel = n => t(n === 1 ? "{n} day" : "{n} days", { n });
-const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+import { t, setLang as useLanguage, LANGS, daysLabel, fmtDay, fmtMonthYear } from "./i18n";
 
 // ── Dates ─────────────────────────────────────────────────────────────────
 const pad = n => String(n).padStart(2, "0");
@@ -48,13 +55,8 @@ const today = () => { const d = new Date(); d.setHours(0,0,0,0); return d; };
 const rel = n => { const d = today(); d.setDate(d.getDate()+n); return iso(d); };
 const parseIso = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); };
 const dayDiff = (a, b) => Math.round((parseIso(b) - parseIso(a)) / 86400000);
-const AZ_MONTHS = ["yanvar","fevral","mart","aprel","may","iyun","iyul","avqust","sentyabr","oktyabr","noyabr","dekabr"];
-const AZ_MONTHS_SHORT = ["yan","fev","mar","apr","may","iyn","iyl","avq","sen","okt","noy","dek"];
-const fmtDate = s => {
-  const d = parseIso(s);
-  return LANG === "az" ? `${d.getDate()} ${AZ_MONTHS_SHORT[d.getMonth()]}` : d.toLocaleDateString("en-GB", { day:"numeric", month:"short" });
-};
-const fmtMonth = d => LANG === "az" ? `${cap(AZ_MONTHS[d.getMonth()])} ${d.getFullYear()}` : d.toLocaleDateString("en-GB", { month:"long", year:"numeric" });
+const fmtDate = s => fmtDay(parseIso(s));
+const fmtMonth = d => fmtMonthYear(d);
 const fmtRange = (a, b) => a === b ? fmtDate(a) : `${fmtDate(a)} – ${fmtDate(b)}`;
 
 // ── Pricing ───────────────────────────────────────────────────────────────
@@ -88,9 +90,41 @@ const LISTINGS = [
   { id:12, cat:"homes",    title:"Sunny Studio — Old City",      photo:studio,    owner:"Aytac L.",   ownerRating:4.6, ownerJoined:"2021", city:"Baku",     metro:"İçərişəhər",        price:120, deposit:0,   retail:null,  rating:4.6, reviews:11, color:"#1A0800", emoji:"🏠", desc:"Bright studio a short walk from the Old City. Ideal for photoshoots, workshops or small events.", rules:["Max 8 people","No loud music after 10pm","Cleaning fee ₼30 applies"], insured:true,  verified:true, availability:"Available now",     bookedDates:[rel(0),rel(1)] },
   { id:13, cat:"music",    title:"JBL Flip Bluetooth Speaker",   photo:jbl,       owner:"Rəşad M.",   ownerRating:4.8, ownerJoined:"2024", city:"Baku",     metro:"Gənclik",           price:6,   deposit:50,  retail:230,   rating:4.8, reviews:31, color:"#111111", emoji:"🔊", desc:"Waterproof portable speaker, 12 hours of battery. Perfect for a picnic at the Boulevard.", rules:["Return charged","Charging cable included"], insured:false, verified:true, availability:"Available now",     bookedDates:[] },
   { id:14, cat:"cameras",  title:"Nikon D750 + 50mm f/1.8",      photo:nikon,     owner:"Günay T.",   ownerRating:4.9, ownerJoined:"2022", city:"Baku",     metro:"Memar Əcəmi",       price:28,  deposit:200, retail:2900,  rating:4.9, reviews:17, color:"#1A1A1A", emoji:"📷", desc:"Full frame DSLR with a sharp 50mm prime. Two batteries and a 64GB card.", rules:["Return fully charged","Format card before return"], insured:true,  verified:true, availability:"Available now",     bookedDates:[rel(7)] },
+  { id:15, cat:"tech",     title:"PlayStation 5 + 2 Controllers", photo:ps5,       owner:"Emil R.",    ownerRating:4.9, ownerJoined:"2023", city:"Baku",     metro:"Nəsimi",            price:15,  deposit:250, retail:1300,  rating:4.9, reviews:26, color:"#1A1A2E", emoji:"🎮", desc:"Disc edition with two controllers and FIFA, Mortal Kombat and Gran Turismo.", rules:["No food near the console","Return games in their cases"], insured:true,  verified:true, availability:"Available now",     bookedDates:[rel(5),rel(6)] },
+  { id:16, cat:"tech",     title:"Nintendo Switch + Mario Kart",  photo:nswitch,   owner:"Lalə H.",    ownerRating:4.8, ownerJoined:"2024", city:"Baku",     metro:"Neftçilər",         price:10,  deposit:150, retail:700,   rating:4.8, reviews:14, color:"#2A0A1A", emoji:"🎮", desc:"Portable console with Mario Kart 8 and two Joy-Con controllers. Great for kids and trips.", rules:["Keep the screen protector on","Return all Joy-Cons"], insured:true,  verified:true, availability:"Available now",     bookedDates:[] },
+  { id:17, cat:"tech",     title:"Full HD Projector + Screen",    photo:projector, owner:"Samir Ə.",   ownerRating:4.7, ownerJoined:"2023", city:"Baku",     metro:"Xalqlar Dostluğu",  price:18,  deposit:200, retail:1100,  rating:4.7, reviews:21, color:"#0A0A2A", emoji:"📽", desc:"Bright 1080p projector with a 100-inch screen and HDMI cable. Perfect for movie nights and football matches.", rules:["Let it cool before packing","Keep the lens cap on"], insured:true,  verified:true, availability:"Available now",     bookedDates:[rel(2)] },
+  { id:18, cat:"sports",   title:"City Bike — 21 Speed",          photo:bike,      owner:"Aysel N.",   ownerRating:4.9, ownerJoined:"2023", city:"Baku",     metro:"Sahil",             price:7,   deposit:80,  retail:600,   rating:4.9, reviews:38, color:"#1A1A1A", emoji:"🚲", desc:"Light road bike with a lock and helmet. Ride the Boulevard straight from Sahil.", rules:["Lock it whenever you stop","Helmet included, please wear it"], insured:false, verified:true, availability:"Available now",     bookedDates:[] },
+  { id:19, cat:"sports",   title:"Ski Set — Skis, Boots, Poles",  photo:ski,       owner:"Ramil Q.",   ownerRating:5.0, ownerJoined:"2022", city:"Baku",     metro:"Koroğlu",           price:30,  deposit:250, retail:1500,  rating:5.0, reviews:19, color:"#0A1A2A", emoji:"⛷", desc:"Full ski set for Şahdağ or Tufandağ. Boots in sizes 42–44. Waxed before every rental.", rules:["Tell the owner your boot size","Dry before returning"], insured:true,  verified:true, availability:"Available weekends", bookedDates:[rel(5),rel(6)] },
+  { id:20, cat:"sports",   title:"Snowboard + Boots",             photo:snowboard, owner:"Nərmin S.",  ownerRating:4.8, ownerJoined:"2023", city:"Baku",     metro:"Gənclik",           price:25,  deposit:200, retail:1200,  rating:4.8, reviews:11, color:"#1A1A1A", emoji:"🏂", desc:"All-mountain snowboard with bindings and size 40 boots. Good for beginners.", rules:["Dry before returning","No rails or park jumps"], insured:true,  verified:true, availability:"Available now",     bookedDates:[] },
+  { id:21, cat:"cameras",  title:"Canon EOS 80D + 18-135mm",      photo:canon,     owner:"Kənan B.",   ownerRating:4.8, ownerJoined:"2022", city:"Baku",     metro:"Həzi Aslanov",      price:22,  deposit:180, retail:2200,  rating:4.8, reviews:23, color:"#1A1A1A", emoji:"📷", desc:"Easy DSLR with a flexible zoom lens. Great for events and first-time shooters.", rules:["Return fully charged","Include the lens hood"], insured:true,  verified:true, availability:"Available now",     bookedDates:[] },
+  { id:22, cat:"fashion",  title:"Men's Suit — Navy, Size 50",    photo:suit,      owner:"Fuad M.",    ownerRating:4.9, ownerJoined:"2023", city:"Baku",     metro:"Nizami",            price:20,  deposit:100, retail:900,   rating:4.9, reviews:16, color:"#0A0A1A", emoji:"👔", desc:"Navy two-piece suit, dry-cleaned after every rental. Tie included.", rules:["No smoking while wearing","Dry cleaning included in the price"], insured:true,  verified:true, availability:"Available now",     bookedDates:[] },
+  { id:23, cat:"fashion",  title:"Evening Dress — Size S",        photo:dress,     owner:"Günel A.",   ownerRating:5.0, ownerJoined:"2024", city:"Baku",     metro:"28 May",            price:25,  deposit:120, retail:800,   rating:5.0, reviews:9,  color:"#2A0A2A", emoji:"👗", desc:"Off-shoulder evening dress for weddings and parties. Professionally cleaned after every rental.", rules:["No perfume directly on the fabric","Dry cleaning included in the price"], insured:true,  verified:true, availability:"Available now",     bookedDates:[rel(3)] },
+  { id:24, cat:"tech",     title:"Meta Quest 3 VR Headset",       photo:vr,        owner:"Tamerlan K.",ownerRating:4.7, ownerJoined:"2024", city:"Baku",     metro:"İnşaatçılar",       price:14,  deposit:200, retail:1000,  rating:4.7, reviews:12, color:"#1A0A2A", emoji:"🥽", desc:"Standalone VR headset with two controllers and 10 games installed.", rules:["Clear space before playing","Keep the lenses out of sunlight"], insured:true,  verified:true, availability:"Available now",     bookedDates:[] },
+  { id:25, cat:"vehicles", title:"Fiat 500 — City Car",           photo:fiat,      owner:"Səbinə Ə.",  ownerRating:4.8, ownerJoined:"2022", city:"Baku",     metro:"Elmlər Akademiyası", price:45, deposit:400, retail:38000, rating:4.8, reviews:27, color:"#0A1A2A", emoji:"🚗", desc:"Small, easy-to-park city car. Automatic, 150 km per day included.", rules:["Valid driving license required","Return with a full tank","No smoking"], insured:true,  verified:true, availability:"Available now",     bookedDates:[rel(1),rel(2)] },
+  { id:26, cat:"events",   title:"Tables & Chairs for 50 Guests", photo:tables,    owner:"Vüqar H.",   ownerRating:4.9, ownerJoined:"2021", city:"Baku",     metro:"Memar Əcəmi",       price:60,  deposit:150, retail:3000,  rating:4.9, reviews:33, color:"#2A1A0A", emoji:"🪑", desc:"Five round tables, 50 chairs and white tablecloths. Delivery and setup available.", rules:["Delivery inside Baku only","Return tablecloths unwashed, cleaning is included"], insured:true,  verified:true, availability:"Book 2 days ahead", bookedDates:[rel(4)] },
+  { id:27, cat:"outdoor",  title:"Mangal + Skewer Set",           photo:mangal,    owner:"Elşən M.",   ownerRating:4.9, ownerJoined:"2023", city:"Baku",     metro:"8 Noyabr",          price:8,   deposit:50,  retail:250,   rating:4.9, reviews:42, color:"#2A1A0A", emoji:"🔥", desc:"Steel mangal with 20 skewers, a fan and a grill grate. Ready for Novruz or a weekend at the dacha.", rules:["Clean before returning","Use outdoors only"], insured:false, verified:true, availability:"Available now",     bookedDates:[] },
 ];
 
-const EMPTY_LIST_FORM = { title:"", cat:"cameras", price:"", deposit:"", retail:"", desc:"", city:"Baku", metro:"28 May", rules:"", photo:null };
+// Ready kits: several items from different owners, rented together for 15% less.
+const KIT_DISCOUNT = 0.15;
+const KITS = [
+  { id:1001, title:"Şahdağ Ski Weekend",   emoji:"⛷", items:[19,20,6],  desc:"Everything for a weekend on the slopes for two: skis, a snowboard and a big backpack." },
+  { id:1002, title:"Wedding Day",          emoji:"💍", items:[22,23,9],  desc:"Look sharp and keep the memories: a suit, an evening dress and an instant camera for the guests." },
+  { id:1003, title:"Novruz Feast",         emoji:"🔥", items:[27,26,13], desc:"Host the whole family: a mangal with skewers, tables and chairs for 50 and a speaker for music." },
+  { id:1004, title:"Movie & Game Night",   emoji:"🍿", items:[17,15,24], desc:"Turn your living room into a cinema: projector with screen, PlayStation 5 and a VR headset." },
+  { id:1005, title:"Content Creator",      emoji:"🎬", items:[1,5,10],   desc:"Shoot, fly and edit: a full-frame camera, a 4K drone and a MacBook Pro for editing." },
+];
+
+const EMPTY_LIST_FORM = { title:"", cat:"cameras", price:"", deposit:"", retail:"", desc:"", city:"Baku", metro:"28 May", rules:"", photo:null, video:null };
+
+// Example requests for "Ask Baku".
+const SAMPLE_REQUESTS = [
+  { id:1, who:"Nigar",  what:"Projector for a football night",   when:"This weekend", metro:"28 May",    budget:20, answers:2 },
+  { id:2, who:"Orxan",  what:"Child car seat for 3 days",        when:"Next week",    metro:"Nərimanov", budget:10, answers:0 },
+  { id:3, who:"Leyla",  what:"Tent and sleeping bags for Qəbələ", when:"This weekend", metro:"Gənclik",   budget:30, answers:1 },
+  { id:4, who:"Tural",  what:"Sewing machine for one day",       when:"Tomorrow",     metro:"Nizami",    budget:8,  answers:3 },
+];
+const WHEN = ["Today","Tomorrow","This weekend","Next week"];
 
 function datesBetween(a, b) {
   const out = [];
@@ -123,8 +157,41 @@ function MetroTag({ station, city, light=false }) {
   return (
     <span style={{ display:"inline-flex", alignItems:"center", gap:"5px" }}>
       <span className="metro-m">M</span>
-      <span style={{ color: light ? "#fff" : undefined }}>{station}</span>
+      <span style={{ color: light ? "#fff" : undefined }}>{t(station)}</span>
     </span>
+  );
+}
+
+// Schematic Baku Metro map. Stations with items get a count bubble; tap one to filter.
+// [name, x, y, label side: l = left, r = right, t = top]
+const METRO_LINES = [
+  { color:"#E4002B", stations:[["İçərişəhər",160,300,"l"],["Sahil",192,270,"l"],["28 May",222,236,"r"],["Gənclik",252,206,"r"],["Nərimanov",282,178,"t"],["Ulduz",316,178,"t"],["Koroğlu",350,178,"t"],["Qara Qarayev",374,202,"r"],["Neftçilər",392,226,"l"],["Xalqlar Dostluğu",406,250,"l"],["Əhmədli",420,274,"l"],["Həzi Aslanov",434,298,"l"]] },
+  { color:"#16A34A", stations:[["Dərnəgül",205,20,"r"],["Azadlıq prospekti",190,42,"r"],["Nəsimi",176,66,"l"],["Memar Əcəmi",168,94,"rt"],["20 Yanvar",168,122,"l"],["İnşaatçılar",174,150,"l"],["Elmlər Akademiyası",186,178,"l"],["Nizami",202,206,"l"],["28 May",222,236,"r"],["Xətai",262,262,"r"]] },
+  { color:"#7C3AED", stations:[["Xocəsən",120,70,"l"],["Avtovağzal",130,96,"l"],["Memar Əcəmi",168,94,"rt"],["8 Noyabr",204,112,"r"]] },
+];
+function MetroMap({ counts, active, onPick }) {
+  const seen = new Set();
+  const dots = METRO_LINES.flatMap(l => l.stations).filter(([n]) => !seen.has(n) && seen.add(n));
+  const label = (x, y, side) => side === "l" ? { x:x-11, y:y+3, anchor:"end" } : side === "t" ? { x, y:y-12, anchor:"middle" } : side === "rt" ? { x:x+10, y:y-6, anchor:"start" } : { x:x+11, y:y+3, anchor:"start" };
+  return (
+    <div style={{ overflowX:"auto" }}>
+      <svg viewBox="40 6 420 310" role="img" aria-label={t("Baku Metro map")} style={{ width:"100%", maxWidth:"620px", minWidth:"300px", display:"block", margin:"0 auto" }}>
+        {METRO_LINES.map((l,i)=>(
+          <polyline key={i} points={l.stations.map(([,x,y])=>`${x},${y}`).join(" ")} fill="none" stroke={l.color} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" opacity="0.85" />
+        ))}
+        {dots.map(([name,x,y,side])=>{
+          const n = counts[name] || 0, on = active === name, L = label(x, y, side);
+          return (
+            <g key={name} onClick={n ? ()=>onPick(name) : undefined} style={{ cursor: n ? "pointer" : "default" }}>
+              <circle cx={x} cy={y} r={n ? 8 : 3.5} fill={on ? "#111" : "#fff"} stroke={n ? "#111" : "#9CA3AF"} strokeWidth={n ? 2 : 1.5} />
+              {n > 0 && <text x={x} y={y+3} textAnchor="middle" fontSize="8.5" fontWeight="700" fill={on ? "#fff" : "#111"} style={{ pointerEvents:"none" }}>{n}</text>}
+              {n > 0 && <text x={L.x} y={L.y} textAnchor={L.anchor} fontSize="9.5" fontWeight="600" fill="#374151" style={{ pointerEvents:"none", paintOrder:"stroke", stroke:"#fff", strokeWidth:3 }}>{t(name)}</text>}
+              <title>{name}</title>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
   );
 }
 
@@ -132,7 +199,11 @@ function MetroTag({ station, city, light=false }) {
 function ItemPhoto({ item, height, radius=0, emojiSize=56, children }) {
   return (
     <div className="ph" style={{ height, borderRadius:radius, background:`linear-gradient(135deg,${item.color},${item.color}AA)` }}>
-      {item.photo
+      {item.photos
+        ? <div className="collage" style={{ position:"absolute", inset:0, zIndex:0 }}>
+            {item.photos.slice(0,3).map((p,i)=><img key={i} src={p} alt={i===0 ? item.title : ""} loading="lazy" />)}
+          </div>
+        : item.photo
         ? <img src={item.photo} alt={item.title} loading="lazy" />
         : <span style={{ fontSize:emojiSize }}>{item.emoji}</span>}
       {children}
@@ -200,6 +271,7 @@ export default function App() {
   const [cat, setCat]                 = useState("all");
   const [search, setSearch]           = useState("");
   const [lang, setLang]               = useState(() => { try { return localStorage.getItem("lend-lang") || "az"; } catch { return "az"; } });
+  useLanguage(lang); // everything rendered below reads the current language
   const [rawListings, setListings]    = useState(LISTINGS);
   const [selected, setSelected]       = useState(null);
   const [range, setRange]             = useState({ start:null, end:null }); // selected rental dates
@@ -210,6 +282,10 @@ export default function App() {
   const [maxPrice, setMaxPrice]       = useState(0); // 0 = any
   const [pickupPhotos, setPickupPhotos] = useState([null, null, null]);
   const [booking, setBooking]         = useState(null);
+  const [pickupVideo, setPickupVideo] = useState(null);
+  const [requests, setRequests]       = useState(SAMPLE_REQUESTS);
+  const [askForm, setAskForm]         = useState({ what:"", when:"This weekend", metro:"28 May", budget:"" });
+  const [offered, setOffered]         = useState([]);
   const [saved, setSaved]             = useState([]);
   const [user, setUser]               = useState(null); // null = logged out
   const [showAuth, setShowAuth]       = useState(false);
@@ -225,7 +301,6 @@ export default function App() {
   const [notif, setNotif]             = useState(null);
   const [mobileMenu, setMobileMenu]   = useState(false);
 
-  LANG = lang; // components below read the current language while rendering
   useEffect(() => {
     document.documentElement.lang = lang;
     try { localStorage.setItem("lend-lang", lang); } catch {}
@@ -234,6 +309,25 @@ export default function App() {
   // Listings with their text in the current language.
   const localize = l => ({ ...l, title:t(l.title), desc:t(l.desc), rules:l.rules.map(r=>t(r)), availability:t(l.availability) });
   const listings = rawListings.map(localize);
+
+  // A kit looks like one listing: combined price (minus the kit discount), deposits and booked days.
+  const kitListing = kit => {
+    const items = kit.items.map(id => listings.find(l => l.id === id)).filter(Boolean);
+    const sum = f => items.reduce((a, l) => a + (l[f] || 0), 0);
+    const owners = new Set(items.map(l => l.owner)).size;
+    return {
+      id:kit.id, isKit:true, kitItems:items, cat:"kits", emoji:kit.emoji, color:"#111",
+      title:t(kit.title), desc:t(kit.desc), photo:items[0].photo, photos:items.map(l => l.photo),
+      owner:t("{n} owners", { n:owners }), ownerRating:5, ownerJoined:"", city:"Baku", metro:items[0].metro,
+      price:Math.round(sum("price") * (1 - KIT_DISCOUNT)), fullPrice:sum("price"),
+      deposit:sum("deposit"), retail:sum("retail"),
+      rating:+(items.reduce((a, l) => a + l.rating, 0) / items.length).toFixed(1), reviews:sum(t("reviews")),
+      rules:[t("Each item follows its owner's rules")], insured:items.every(l => l.insured), verified:true,
+      availability:t("Available now"), bookedDates:[...new Set(items.flatMap(l => l.bookedDates))],
+    };
+  };
+  const kits = KITS.map(kitListing);
+  const findItem = id => listings.find(l => l.id === id) || kits.find(k => k.id === id);
 
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 50);
@@ -247,8 +341,8 @@ export default function App() {
   };
 
   const q = search.trim().toLowerCase();
-  const filtered = listings.filter(l => {
-    const mc = cat === "all" || l.cat === cat;
+  const filtered = (cat === "kits" ? kits : listings).filter(l => {
+    const mc = cat === "all" || cat === "kits" || l.cat === cat;
     const ms = !q || [l.title, l.city, l.cat, l.metro || "", l.desc].some(f => f.toLowerCase().includes(q));
     const mm = metroFilter === "all" || l.metro === metroFilter;
     const mi = !insuredOnly || l.insured;
@@ -292,16 +386,18 @@ export default function App() {
   const handleBook = () => {
     if (!user) { setShowAuth(true); setAuthMode("signup"); return; }
     if (!user.verified) { go("verify"); return; }
-    if (!range.start) { showNotif("Pick your dates first", "error"); return; }
+    if (!range.start) { showNotif(t("Pick your dates first"), "error"); return; }
     const end = range.end || range.start;
     const b = { item:rawListings.find(l=>l.id===selected.id) || selected, start:range.start, end, days, delivery, ...quote(selected, days, delivery) };
     setBooking(b);
-    setListings(ls => ls.map(l => l.id === selected.id
+    const ids = selected.isKit ? KITS.find(k => k.id === selected.id).items : [selected.id];
+    setListings(ls => ls.map(l => ids.includes(l.id)
       ? { ...l, bookedDates:[...l.bookedDates, ...datesBetween(range.start, end)] } : l));
     setPickupPhotos([null, null, null]);
+    setPickupVideo(null);
     setBookingDone(true);
     go("booked");
-    showNotif("Booking confirmed! 🎉");
+    showNotif(t("Booking confirmed! 🎉"));
   };
 
   const handleLogin = () => {
@@ -310,14 +406,14 @@ export default function App() {
     setShowAuth(false);
     setAuthStep(0);
     setAuthForm({ name:"", email:"", password:"" });
-    showNotif("Welcome back! 👋");
+    showNotif(t("Welcome back! 👋"));
   };
 
   const handleVerifyDone = () => {
     setUser(u => ({ ...u, verified:true }));
     setVerifyStep(0);
     go(selected ? "listing" : "home");
-    showNotif("Identity verified ✓");
+    showNotif(t("Identity verified ✓"));
   };
 
   const submitListing = () => {
@@ -334,6 +430,7 @@ export default function App() {
       color: "#1A1A2E",
       emoji: CATS.find(c=>c.id===listForm.cat)?.icon || "📦",
       photo: listForm.photo,
+      video: listForm.video,
       metro: listForm.city === "Baku" ? listForm.metro : null,
       retail: parseInt(listForm.retail) || null,
       desc: listForm.desc,
@@ -344,7 +441,7 @@ export default function App() {
     };
     setListings(l => [newItem, ...l]);
     setListStep(4);
-    showNotif("Item listed successfully! 🎉");
+    showNotif(t("Item listed successfully! 🎉"));
   };
 
   // Items the signed-in user listed this session, followed by demo listings.
@@ -359,7 +456,9 @@ export default function App() {
           {saved.includes(item.id) ? "❤️" : "🤍"}
         </button>
         <div style={{ position:"absolute", top:"12px", left:"12px", display:"flex", gap:"4px" }}>
-          {item.verified && <span className="pill-light">{t("✓ Verified")}</span>}
+          {item.video && <span className="pill-kit">▶ {t("Video")}</span>}
+          {item.isKit ? <span className="pill-kit">🎁 {t("Ready kit")} · −{KIT_DISCOUNT*100}%</span>
+            : item.verified && <span className="pill-light">{t("✓ Verified")}</span>}
         </div>
         <div style={{ position:"absolute", bottom:"10px", left:"12px", right:"12px", display:"flex", justifyContent:"space-between", alignItems:"center", gap:"6px" }}>
           {item.insured ? <span className="pill-green">{t("🛡 Protected")}</span> : <span />}
@@ -375,7 +474,8 @@ export default function App() {
         </div>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end" }}>
           <div>
-            <span style={{ fontFamily:"'Fraunces',serif", fontSize:"22px", fontWeight:700, color:"#111" }}>₼{item.price}</span>
+            {item.isKit && <span style={{ fontSize:"13px", color:"#9CA3AF", textDecoration:"line-through", marginRight:"4px" }}>₼{item.fullPrice}</span>}
+            <span style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"22px", fontWeight:700, color:"#111" }}>₼{item.price}</span>
             <span style={{ fontSize:"12px", color:"#9CA3AF" }}>{t("/day")}</span>
             <div style={{ fontSize:"11px", color:"#16A34A", fontWeight:600 }}>{t("₼{n} for a week", { n:Math.round(item.price*7*0.8) })}</div>
           </div>
@@ -390,12 +490,12 @@ export default function App() {
 
   // ── CSS ──────────────────────────────────────────────────────────────────
   const css = `
-    @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap');
     *{box-sizing:border-box;margin:0;padding:0;}
     html{scroll-behavior:smooth;}
     ::-webkit-scrollbar{width:4px;}
     ::-webkit-scrollbar-thumb{background:#E5E7EB;border-radius:4px;}
-    body{background:#F8F7F4;font-family:'DM Sans',sans-serif;color:#111;}
+    body{background:#F8F7F4;font-family:'DM Sans','Inter',sans-serif;color:#111;}
 
     @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -411,11 +511,11 @@ export default function App() {
     /* Nav */
     .nav{position:fixed;top:0;left:0;right:0;z-index:200;padding:14px 32px;display:flex;align-items:center;justify-content:space-between;transition:all 0.3s;gap:16px;}
     .nav.scrolled{background:rgba(248,247,244,0.97);backdrop-filter:blur(16px);border-bottom:1px solid #F0EFEC;box-shadow:0 1px 12px rgba(0,0,0,0.06);}
-    .logo{font-family:'Fraunces',serif;font-size:24px;font-weight:700;color:#111;cursor:pointer;letter-spacing:-0.5px;flex-shrink:0;}
+    .logo{font-family:'Fraunces','Lora',serif;font-size:24px;font-weight:700;color:#111;cursor:pointer;letter-spacing:-0.5px;flex-shrink:0;}
     .logo span{color:#16A34A;}
 
     /* Buttons */
-    .btn{border:none;border-radius:10px;padding:10px 18px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:6px;}
+    .btn{border:none;border-radius:10px;padding:10px 18px;font-family:'DM Sans','Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:6px;}
     .btn:hover{filter:brightness(0.95);}
     .btn:active{transform:scale(0.97);}
     .btn-ghost{background:transparent;color:#6B7280;border:1px solid transparent;}
@@ -437,18 +537,18 @@ export default function App() {
     .card-hover:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,0.09);border-color:#E5E7EB;cursor:pointer;}
 
     /* Inputs */
-    .inp{background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:12px;padding:13px 16px;font-family:'DM Sans',sans-serif;font-size:14px;color:#111;outline:none;width:100%;transition:all 0.15s;}
+    .inp{background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:12px;padding:13px 16px;font-family:'DM Sans','Inter',sans-serif;font-size:14px;color:#111;outline:none;width:100%;transition:all 0.15s;}
     .inp:focus{border-color:#16A34A;background:#fff;box-shadow:0 0 0 3px rgba(22,163,74,0.08);}
     .inp::placeholder{color:#9CA3AF;}
     textarea.inp{resize:none;line-height:1.6;}
     select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239CA3AF' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;}
 
     /* Category pills */
-    .cat{border:1.5px solid #E5E7EB;border-radius:100px;padding:8px 16px;background:#fff;cursor:pointer;transition:all 0.15s;white-space:nowrap;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:#374151;display:flex;align-items:center;gap:5px;}
+    .cat{border:1.5px solid #E5E7EB;border-radius:100px;padding:8px 16px;background:#fff;cursor:pointer;transition:all 0.15s;white-space:nowrap;font-family:'DM Sans','Inter',sans-serif;font-size:13px;font-weight:500;color:#374151;display:flex;align-items:center;gap:5px;}
     .cat:hover{border-color:#16A34A;background:#F0FDF4;}
     .cat.active{background:#111;color:#fff;border-color:#111;}
     .lang{display:flex;background:#fff;border:1.5px solid #E5E7EB;border-radius:100px;padding:2px;}
-    .lang button{border:none;background:none;border-radius:100px;padding:5px 9px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:700;color:#9CA3AF;cursor:pointer;}
+    .lang button{border:none;background:none;border-radius:100px;padding:5px 9px;font-family:'DM Sans','Inter',sans-serif;font-size:11px;font-weight:700;color:#9CA3AF;cursor:pointer;}
     .lang button.on{background:#111;color:#fff;}
     .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
 
@@ -457,7 +557,7 @@ export default function App() {
     .modal{background:#fff;border-radius:24px;padding:32px;width:100%;max-width:440px;animation:fadeUp 0.3s ease;max-height:90vh;overflow-y:auto;}
 
     /* Dashboard */
-    .dash-nav-btn{background:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:10px 16px;border-radius:10px;color:#6B7280;transition:all 0.15s;display:flex;align-items:center;gap:8px;width:100%;text-align:left;}
+    .dash-nav-btn{background:none;border:none;cursor:pointer;font-family:'DM Sans','Inter',sans-serif;font-size:13px;font-weight:500;padding:10px 16px;border-radius:10px;color:#6B7280;transition:all 0.15s;display:flex;align-items:center;gap:8px;width:100%;text-align:left;}
     .dash-nav-btn:hover{background:#F3F4F6;color:#111;}
     .dash-nav-btn.active{background:#F0FDF4;color:#16A34A;font-weight:600;}
 
@@ -467,7 +567,7 @@ export default function App() {
     .verify-box.done{border-style:solid;border-color:#16A34A;background:#F0FDF4;}
 
     /* Notif */
-    .notif{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);border-radius:100px;padding:12px 24px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;z-index:500;white-space:nowrap;animation:notifIn 0.3s ease;box-shadow:0 8px 24px rgba(0,0,0,0.15);}
+    .notif{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);border-radius:100px;padding:12px 24px;font-family:'DM Sans','Inter',sans-serif;font-size:13px;font-weight:500;z-index:500;white-space:nowrap;animation:notifIn 0.3s ease;box-shadow:0 8px 24px rgba(0,0,0,0.15);}
 
     /* Stat card */
     .stat{background:#fff;border:1px solid #F0EFEC;border-radius:16px;padding:20px;text-align:center;}
@@ -475,7 +575,7 @@ export default function App() {
     /* Search bar */
     .searchbar{display:flex;align-items:center;background:#fff;border:1.5px solid #E5E7EB;border-radius:14px;padding:6px 6px 6px 16px;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.04);}
     .searchbar:focus-within{border-color:#16A34A;box-shadow:0 4px 16px rgba(22,163,74,0.1);}
-    .searchbar input{flex:1;border:none;outline:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:14px;color:#111;}
+    .searchbar input{flex:1;border:none;outline:none;background:transparent;font-family:'DM Sans','Inter',sans-serif;font-size:14px;color:#111;}
     .searchbar input::placeholder{color:#9CA3AF;}
 
     /* Photo pills */
@@ -489,13 +589,17 @@ export default function App() {
     .card-hover:hover .ph img{transform:scale(1.04);}
     .ph-shade::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.18) 0%,transparent 35%,transparent 65%,rgba(0,0,0,0.35) 100%);pointer-events:none;}
     .ph > *:not(img){position:relative;z-index:1;}
+    .collage{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;gap:2px;}
+    .ph .collage img{position:static;width:100%;height:100%;object-fit:cover;min-height:0;}
+    .collage img:first-child{grid-row:1 / 3;}
+    .pill-kit{background:#111;border-radius:100px;padding:3px 10px;font-size:10px;font-weight:700;color:#fff;}
     .metro-m{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#E4002B;color:#fff;font-size:9px;font-weight:700;flex-shrink:0;}
 
     /* Calendar */
     .cal{background:#F8F7F4;border-radius:14px;padding:14px;}
     .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
     .cal-w{font-size:10px;color:#9CA3AF;text-align:center;font-weight:600;padding-bottom:4px;}
-    .cal-day{aspect-ratio:1;border:none;background:#fff;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:#111;cursor:pointer;transition:background 0.12s;font-variant-numeric:tabular-nums;}
+    .cal-day{aspect-ratio:1;border:none;background:#fff;border-radius:8px;font-family:'DM Sans','Inter',sans-serif;font-size:13px;color:#111;cursor:pointer;transition:background 0.12s;font-variant-numeric:tabular-nums;}
     .cal-day:hover:not(:disabled){background:#DCFCE7;}
     .cal-day:disabled{background:transparent;color:#D1D5DB;cursor:not-allowed;}
     .cal-day.booked{text-decoration:line-through;color:#9CA3AF;background:#F3F4F6;}
@@ -507,9 +611,9 @@ export default function App() {
     .cal-key{display:inline-block;width:10px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:4px;}
 
     /* Toggle chips */
-    .chip{border:1.5px solid #E5E7EB;border-radius:100px;padding:7px 14px;background:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:#374151;transition:all 0.15s;}
+    .chip{border:1.5px solid #E5E7EB;border-radius:100px;padding:7px 14px;background:#fff;cursor:pointer;font-family:'DM Sans','Inter',sans-serif;font-size:12px;font-weight:600;color:#374151;transition:all 0.15s;}
     .chip.on{background:#F0FDF4;border-color:#16A34A;color:#16A34A;}
-    .sel{border:1.5px solid #E5E7EB;border-radius:100px;padding:7px 30px 7px 14px;background:#fff;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:#374151;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239CA3AF' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
+    .sel{border:1.5px solid #E5E7EB;border-radius:100px;padding:7px 30px 7px 14px;background:#fff;font-family:'DM Sans','Inter',sans-serif;font-size:12px;font-weight:600;color:#374151;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%239CA3AF' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
 
     /* Photo upload slots */
     .slot{position:relative;aspect-ratio:4/3;border:2px dashed #E5E7EB;border-radius:14px;background:#FAFAF8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;overflow:hidden;font-size:12px;color:#6B7280;transition:all 0.15s;text-align:center;padding:6px;}
@@ -545,7 +649,7 @@ export default function App() {
     <div className="overlay" onClick={()=>setShowAuth(false)}>
       <div className="modal" onClick={e=>e.stopPropagation()}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"24px" }}>
-          <div style={{ fontFamily:"'Fraunces',serif", fontSize:"26px", fontWeight:600, color:"#111" }}>
+          <div style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"26px", fontWeight:600, color:"#111" }}>
             {authMode==="login" ? t("Welcome back") : t("Join lend.")}
           </div>
           <button className="btn btn-ghost" onClick={()=>setShowAuth(false)} style={{ fontSize:"20px", padding:"6px 10px" }}>×</button>
@@ -563,7 +667,7 @@ export default function App() {
             </button>
             <div style={{ textAlign:"center", fontSize:"13px", color:"#6B7280" }}>
               {authMode==="login" ? (t("No account?")+" ") : (t("Already have one?")+" ")}
-              <button onClick={()=>setAuthMode(m=>m==="login"?"signup":"login")} style={{ background:"none", border:"none", color:"#16A34A", fontWeight:600, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", fontSize:"13px" }}>
+              <button onClick={()=>setAuthMode(m=>m==="login"?"signup":"login")} style={{ background:"none", border:"none", color:"#16A34A", fontWeight:600, cursor:"pointer", fontFamily:"'DM Sans','Inter',sans-serif", fontSize:"13px" }}>
                 {authMode==="login" ? t("Sign up") : t("Log in")}
               </button>
             </div>
@@ -597,10 +701,11 @@ export default function App() {
 
       <div style={{ display:"flex", alignItems:"center", gap:"8px" }}>
         <div className="lang" role="group" aria-label={t("Language")}>
-          {["az","en"].map(l=>(
+          {LANGS.map(l=>(
             <button key={l} className={lang===l?"on":""} onClick={()=>setLang(l)} aria-pressed={lang===l}>{l.toUpperCase()}</button>
           ))}
         </div>
+        <button className="btn btn-ghost hide-mobile" onClick={()=>go("ask")}>💬 {t("Ask Baku")}</button>
         {user ? (
           <>
             <button className="btn btn-ghost hide-mobile" onClick={()=>setScreen("list")}>{t("List an item")}</button>
@@ -661,9 +766,9 @@ export default function App() {
             <span style={{ fontSize:"12px", fontWeight:600, color:"#16A34A" }}>{t("Live in Baku · pick up near your metro")}</span>
           </div>
 
-          <h1 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(44px,9vw,96px)", fontWeight:700, lineHeight:0.92, letterSpacing:"-3px", color:"#111", marginBottom:"24px", animation:"fadeUp 0.7s ease" }}>
-            {lang === "az"
-              ? <><em style={{ fontStyle:"italic", color:"#16A34A" }}>Hər şeyi</em><br/>qonşundan<br/>icarəyə götür.</>
+          <h1 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"clamp(44px,9vw,96px)", fontWeight:700, lineHeight:0.92, letterSpacing:"-3px", color:"#111", marginBottom:"24px", animation:"fadeUp 0.7s ease" }}>
+            {lang === "az" ? <><em style={{ fontStyle:"italic", color:"#16A34A" }}>Hər şeyi</em><br/>qonşundan<br/>icarəyə götür.</>
+              : lang === "ru" ? <>Бери <em style={{ fontStyle:"italic", color:"#16A34A" }}>всё</em><br/>в аренду<br/>у соседей.</>
               : <>{t("Rent")} <em style={{ fontStyle:"italic", color:"#16A34A" }}>anything</em><br/>from real<br/>people near you.</>}
           </h1>
 
@@ -692,7 +797,7 @@ export default function App() {
         <div style={{ maxWidth:"900px", margin:"0 auto", display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))", gap:"32px" }}>
           {[["₼0",t("to list your item")],["10%",t("platform fee only")],["90%",t("goes to the owner")],["M",t("pickup near your metro")],["7+",t("days = 20% off")]].map(([n,l])=>(
             <div key={l} style={{ textAlign:"center" }}>
-              <div style={{ fontFamily:"'Fraunces',serif", fontSize:"36px", fontWeight:700, color:"#fff", marginBottom:"4px", minHeight:"1.2em", display:"flex", alignItems:"center", justifyContent:"center" }}>{n==="M" ? <span className="metro-m" style={{ width:"40px", height:"40px", fontSize:"20px", fontFamily:"'DM Sans',sans-serif" }}>M</span> : n}</div>
+              <div style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"36px", fontWeight:700, color:"#fff", marginBottom:"4px", minHeight:"1.2em", display:"flex", alignItems:"center", justifyContent:"center" }}>{n==="M" ? <span className="metro-m" style={{ width:"40px", height:"40px", fontSize:"20px", fontFamily:"'DM Sans','Inter',sans-serif" }}>M</span> : n}</div>
               <div style={{ fontSize:"13px", color:"rgba(255,255,255,0.4)", fontWeight:300 }}>{l}</div>
             </div>
           ))}
@@ -703,7 +808,7 @@ export default function App() {
       <div style={{ padding:"80px 16px", maxWidth:"1000px", margin:"0 auto" }}>
         <div style={{ textAlign:"center", marginBottom:"56px" }}>
           <div style={{ fontSize:"12px", fontWeight:600, color:"#16A34A", letterSpacing:"2px", textTransform:"uppercase", marginBottom:"10px" }}>{t("Simple by design")}</div>
-          <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(32px,5vw,52px)", fontWeight:700, letterSpacing:"-1px", color:"#111" }}>{t("How lend. works")}</h2>
+          <h2 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"clamp(32px,5vw,52px)", fontWeight:700, letterSpacing:"-1px", color:"#111" }}>{t("How lend. works")}</h2>
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))", gap:"16px" }}>
           {[
@@ -715,7 +820,7 @@ export default function App() {
           ].map((s,i)=>(
             <div key={i} className="card" style={{ padding:"28px 24px", animation:`fadeUp 0.5s ease ${i*0.08}s both` }}>
               <div style={{ fontSize:"36px", marginBottom:"14px" }}>{s.icon}</div>
-              <div style={{ fontFamily:"'Fraunces',serif", fontSize:"20px", fontWeight:600, color:"#111", marginBottom:"8px" }}>{s.title}</div>
+              <div style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"20px", fontWeight:600, color:"#111", marginBottom:"8px" }}>{s.title}</div>
               <div style={{ fontSize:"13px", color:"#6B7280", lineHeight:1.7 }}>{s.desc}</div>
             </div>
           ))}
@@ -726,7 +831,7 @@ export default function App() {
       <div style={{ padding:"0 16px 80px", maxWidth:"1200px", margin:"0 auto" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"28px" }}>
           <div>
-            <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, letterSpacing:"-0.5px", color:"#111" }}>{t("Popular near you")}</h2>
+            <h2 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"32px", fontWeight:700, letterSpacing:"-0.5px", color:"#111" }}>{t("Popular near you")}</h2>
             <div style={{ fontSize:"13px", color:"#9CA3AF", marginTop:"4px" }}>{t("Early preview: these are example listings while we launch.")}</div>
           </div>
           <button className="btn btn-outline" onClick={()=>{ setCat("all"); setMetroFilter("all"); go("browse"); }}>{t("View all →")}</button>
@@ -736,18 +841,59 @@ export default function App() {
         </div>
       </div>
 
+      {/* Ready kits */}
+      <div style={{ padding:"0 16px 80px", maxWidth:"1200px", margin:"0 auto" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", gap:"16px", flexWrap:"wrap", marginBottom:"24px" }}>
+          <div>
+            <div style={{ fontSize:"12px", fontWeight:600, color:"#16A34A", letterSpacing:"2px", textTransform:"uppercase", marginBottom:"10px" }}>🎁 {t("Ready kits")}</div>
+            <h2 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"clamp(26px,4vw,40px)", fontWeight:700, letterSpacing:"-0.5px", color:"#111", lineHeight:1.1, textWrap:"balance" }}>{t("One booking for the whole occasion.")}</h2>
+            <p style={{ fontSize:"15px", color:"#6B7280", lineHeight:1.7, marginTop:"10px", maxWidth:"560px" }}>{t("Ski weekend, wedding, Novruz at home: we bundle items from different neighbours into one kit, {p}% cheaper than renting them one by one.", { p:KIT_DISCOUNT*100 })}</p>
+          </div>
+          <button className="btn btn-outline" onClick={()=>{ setSearch(""); setMetroFilter("all"); setCat("kits"); go("browse"); }}>{t("All kits →")}</button>
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(260px,1fr))", gap:"16px" }}>
+          {kits.slice(0,4).map(renderCard)}
+        </div>
+      </div>
+
+      {/* Ask Baku */}
+      <div style={{ padding:"0 16px 80px", maxWidth:"1200px", margin:"0 auto" }}>
+        <div style={{ background:"#111", color:"#fff", borderRadius:"24px", padding:"clamp(24px,4vw,40px)", display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))", gap:"24px", alignItems:"center" }}>
+          <div>
+            <div style={{ fontSize:"12px", fontWeight:600, color:"#4ADE80", letterSpacing:"2px", textTransform:"uppercase", marginBottom:"10px" }}>💬 {t("Ask Baku")}</div>
+            <h2 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"clamp(26px,4vw,40px)", fontWeight:700, letterSpacing:"-0.5px", lineHeight:1.1, textWrap:"balance" }}>{t("Can't find it? Ask the neighbourhood.")}</h2>
+            <p style={{ fontSize:"15px", color:"rgba(255,255,255,0.6)", lineHeight:1.7, marginTop:"10px" }}>{t("Post what you need, when, and near which metro. Owners nearby who have it will answer.")}</p>
+            <button className="btn btn-green btn-lg" style={{ marginTop:"20px" }} onClick={()=>go("ask")}>{t("Post a request →")}</button>
+          </div>
+          <div style={{ display:"flex", flexDirection:"column", gap:"10px" }}>
+            {requests.slice(0,3).map(r=>(
+              <div key={r.id} style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:"14px", padding:"12px 14px" }}>
+                <div style={{ fontWeight:600, fontSize:"14px" }}>{t(r.what)}</div>
+                <div style={{ fontSize:"12px", color:"rgba(255,255,255,0.55)", marginTop:"4px", display:"flex", gap:"6px", alignItems:"center", flexWrap:"wrap" }}>
+                  <MetroTag station={r.metro} city="Baku" light /> · {t(r.when)} · {t("up to ₼{n}/day", { n:r.budget })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* Metro pickup */}
       <div style={{ padding:"0 16px 80px", maxWidth:"1200px", margin:"0 auto" }}>
         <div className="card" style={{ padding:"clamp(24px,4vw,40px)", display:"grid", gap:"20px" }}>
           <div>
             <div style={{ fontSize:"12px", fontWeight:600, color:"#E4002B", letterSpacing:"2px", textTransform:"uppercase", marginBottom:"10px", display:"flex", alignItems:"center", gap:"8px" }}><span className="metro-m">M</span> {t("Metro pickup")}</div>
-            <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(26px,4vw,40px)", fontWeight:700, letterSpacing:"-0.5px", color:"#111", lineHeight:1.1, textWrap:"balance" }}>{t("Pick it up on your way home.")}</h2>
+            <h2 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"clamp(26px,4vw,40px)", fontWeight:700, letterSpacing:"-0.5px", color:"#111", lineHeight:1.1, textWrap:"balance" }}>{t("Pick it up on your way home.")}</h2>
             <p style={{ fontSize:"15px", color:"#6B7280", lineHeight:1.7, marginTop:"10px", maxWidth:"560px" }}>{t("Every Baku listing shows its nearest metro station. Choose yours and see what you can grab without a taxi.")}</p>
           </div>
+          <MetroMap
+            counts={Object.fromEntries(METRO.map(m=>[m, listings.filter(l=>l.metro===m).length]))}
+            active={null}
+            onPick={m=>{ setSearch(""); setCat("all"); setMetroFilter(m); go("browse"); }} />
           <div style={{ display:"flex", gap:"8px", flexWrap:"wrap" }}>
             {METRO.filter(m=>listings.some(l=>l.metro===m)).map(m=>(
               <button key={m} className="cat" onClick={()=>{ setSearch(""); setCat("all"); setMetroFilter(m); go("browse"); }}>
-                <span className="metro-m">M</span> {m}
+                <span className="metro-m">M</span> {t(m)}
                 <span style={{ color:"#9CA3AF", fontWeight:400 }}>{listings.filter(l=>l.metro===m).length}</span>
               </button>
             ))}
@@ -759,7 +905,7 @@ export default function App() {
       <div style={{ padding:"0 16px 80px", maxWidth:"1200px", margin:"0 auto" }}>
         <div style={{ marginBottom:"28px" }}>
           <div style={{ fontSize:"12px", fontWeight:600, color:"#16A34A", letterSpacing:"2px", textTransform:"uppercase", marginBottom:"10px" }}>{t("Only on lend.")}</div>
-          <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(28px,4vw,44px)", fontWeight:700, letterSpacing:"-0.5px", color:"#111", lineHeight:1.1 }}>{t("Built for renting, not just listing.")}</h2>
+          <h2 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"clamp(28px,4vw,44px)", fontWeight:700, letterSpacing:"-0.5px", color:"#111", lineHeight:1.1 }}>{t("Built for renting, not just listing.")}</h2>
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))", gap:"16px" }}>
           {[
@@ -769,7 +915,7 @@ export default function App() {
             { k:"🗓", title:t("Live calendar"), desc:t("See booked days before you ask. Pick your dates and the price updates instantly.") },
           ].map((f,i)=>(
             <div key={f.title} className="card" style={{ padding:"24px", animation:`fadeUp 0.5s ease ${i*0.06}s both` }}>
-              <div style={{ width:"44px", height:"44px", borderRadius:"12px", background:"#111", color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Fraunces',serif", fontSize:"20px", fontWeight:700, marginBottom:"16px" }}>{f.k}</div>
+              <div style={{ width:"44px", height:"44px", borderRadius:"12px", background:"#111", color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Fraunces','Lora',serif", fontSize:"20px", fontWeight:700, marginBottom:"16px" }}>{f.k}</div>
               <div style={{ fontWeight:600, fontSize:"16px", color:"#111", marginBottom:"6px" }}>{f.title}</div>
               <div style={{ fontSize:"13px", color:"#6B7280", lineHeight:1.7 }}>{f.desc}</div>
             </div>
@@ -783,7 +929,7 @@ export default function App() {
           <div className="stack-mobile" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"64px", alignItems:"center" }}>
             <div>
               <div style={{ fontSize:"12px", fontWeight:600, color:"#16A34A", letterSpacing:"2px", textTransform:"uppercase", marginBottom:"12px" }}>{t("Protection built in")}</div>
-              <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(28px,4vw,44px)", fontWeight:700, letterSpacing:"-0.5px", color:"#111", marginBottom:"20px", lineHeight:1.1 }}>{t("Every rental is")}<br/><em style={{ fontStyle:"italic" }}>{t("protected.")}</em></h2>
+              <h2 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"clamp(28px,4vw,44px)", fontWeight:700, letterSpacing:"-0.5px", color:"#111", marginBottom:"20px", lineHeight:1.1 }}>{t("Every rental is")}<br/><em style={{ fontStyle:"italic" }}>{t("protected.")}</em></h2>
               <p style={{ fontSize:"15px", color:"#6B7280", lineHeight:1.8, marginBottom:"28px" }}>
                 {t("Every rental has a deposit, a verified renter, and photos of the item's condition at pickup. If something goes wrong, there's a clear record of what happened.")}
               </p>
@@ -811,7 +957,7 @@ export default function App() {
               ].map(s=>(
                 <div key={s.label} className="card" style={{ padding:"24px", background:s.color, border:"none" }}>
                   <div style={{ fontSize:"28px", marginBottom:"8px" }}>{s.icon}</div>
-                  <div style={{ fontFamily:"'Fraunces',serif", fontSize:"28px", fontWeight:700, color:"#111", marginBottom:"4px" }}>{s.value}</div>
+                  <div style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"28px", fontWeight:700, color:"#111", marginBottom:"4px" }}>{s.value}</div>
                   <div style={{ fontSize:"12px", color:"#6B7280", fontWeight:400 }}>{s.label}</div>
                 </div>
               ))}
@@ -822,7 +968,7 @@ export default function App() {
 
       {/* CTA */}
       <div style={{ background:"#111", padding:"80px 32px", textAlign:"center" }}>
-        <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(36px,6vw,64px)", fontWeight:700, letterSpacing:"-1px", color:"#fff", marginBottom:"16px", lineHeight:1.05 }}>
+        <h2 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"clamp(36px,6vw,64px)", fontWeight:700, letterSpacing:"-1px", color:"#fff", marginBottom:"16px", lineHeight:1.05 }}>
           {t("Start earning")}<br/>{t("from what you own.")}
         </h2>
         <p style={{ fontSize:"18px", color:"rgba(255,255,255,0.45)", marginBottom:"36px", fontWeight:300 }}>{t("Your camera earns ₼35/day sitting in your bag. List it in 3 minutes.")}</p>
@@ -837,7 +983,7 @@ export default function App() {
         <div className="stack-mobile" style={{ maxWidth:"1100px", margin:"0 auto", display:"grid", gridTemplateColumns:"2fr 1fr 1fr 1fr", gap:"40px", marginBottom:"40px" }}>
           <div>
             <div className="logo" style={{ color:"#fff", marginBottom:"12px", display:"block" }}>lend<span>.</span></div>
-            <div style={{ fontSize:"13px", color:"rgba(255,255,255,0.3)", lineHeight:1.7, fontStyle:"italic", fontFamily:"'Fraunces',serif" }}>{t("Making ownership optional, one rental at a time.")}</div>
+            <div style={{ fontSize:"13px", color:"rgba(255,255,255,0.3)", lineHeight:1.7, fontStyle:"italic", fontFamily:"'Fraunces','Lora',serif" }}>{t("Making ownership optional, one rental at a time.")}</div>
           </div>
           {[[t("Rent"),[t("Browse all"),t("Cameras"),t("Vehicles"),t("Spaces"),t("Tools")]],[t("Earn"),[t("List an item"),t("How pricing works"),t("Insurance"),t("Owner dashboard")]],[t("Company"),[t("About"),t("Blog"),t("Careers"),t("Contact"),t("Privacy")]]].map(([title,links])=>(
             <div key={title}>
@@ -878,7 +1024,7 @@ export default function App() {
           <label className="sr-only" htmlFor="f-metro">{t("Metro station")}</label>
           <select id="f-metro" className="sel" value={metroFilter} onChange={e=>setMetroFilter(e.target.value)} style={metroFilter!=="all"?{ borderColor:"#E4002B", color:"#E4002B" }:undefined}>
             <option value="all">{t("Any metro station")}</option>
-            {METRO.map(m=><option key={m} value={m}>{t("{m} metro", { m })}</option>)}
+            {METRO.map(m=><option key={m} value={m}>{t("{m} metro", { m:t(m) })}</option>)}
           </select>
           <label className="sr-only" htmlFor="f-price">{t("Max price per day")}</label>
           <select id="f-price" className="sel" value={maxPrice} onChange={e=>setMaxPrice(Number(e.target.value))}>
@@ -900,7 +1046,7 @@ export default function App() {
           <div style={{ fontSize:"14px", color:"#6B7280" }}>
             <strong style={{ color:"#111" }}>{filtered.length}</strong> {t(filtered.length===1 ? "item" : "items")}
             {search && <> {t("for “{q}”", { q:search })}</>}
-            {metroFilter!=="all" && <> · <strong style={{ color:"#111" }}>{t("{m} metro", { m:metroFilter })}</strong></>}
+            {metroFilter!=="all" && <> · <strong style={{ color:"#111" }}>{t("{m} metro", { m:t(metroFilter) })}</strong></>}
             <span style={{ color:"#9CA3AF" }}> · {t("example listings")}</span>
           </div>
           {(metroFilter!=="all"||insuredOnly||maxPrice||cat!=="all"||search) && (
@@ -915,7 +1061,7 @@ export default function App() {
         {filtered.length === 0 && (
           <div style={{ textAlign:"center", padding:"64px 16px" }}>
             <div style={{ fontSize:"48px", marginBottom:"16px" }}>🔍</div>
-            <div style={{ fontFamily:"'Fraunces',serif", fontSize:"24px", color:"#111", marginBottom:"8px" }}>{t("Nothing found")}</div>
+            <div style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"24px", color:"#111", marginBottom:"8px" }}>{t("Nothing found")}</div>
             <div style={{ fontSize:"14px", color:"#9CA3AF", marginBottom:"24px" }}>{t("Try another metro station or clear the filters, or be the first to list it.")}</div>
             <button className="btn btn-green btn-lg" onClick={()=>setScreen("list")}>{t("List it yourself")}</button>
           </div>
@@ -926,10 +1072,10 @@ export default function App() {
 
   // ── LISTING DETAIL ────────────────────────────────────────────────────────
   if (screen === "listing" && selected) {
-    const item = listings.find(l=>l.id===selected.id) || selected;
+    const item = findItem(selected.id) || selected;
     const qt = quote(item, days, delivery);
     const rentWeek = quote(item, 7).total;
-    const similar = listings.filter(l=>l.cat===item.cat && l.id!==item.id).slice(0,3);
+    const similar = (item.isKit ? kits : listings).filter(l=>l.cat===item.cat && l.id!==item.id).slice(0,3);
     return (
     <div style={{ minHeight:"100vh", background:BG }}><style>{css}</style>
       <Header minimal />
@@ -953,21 +1099,29 @@ export default function App() {
               {item.deposit > 0 && <Badge label={t("₼{n} deposit", { n:item.deposit })} color="#FDF4FF" text="#7C3AED" />}
             </div>
 
-            <h1 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(28px,4vw,38px)", fontWeight:700, letterSpacing:"-0.5px", color:"#111", marginBottom:"8px", lineHeight:1.1, textWrap:"balance" }}>{item.title}</h1>
+            <h1 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"clamp(28px,4vw,38px)", fontWeight:700, letterSpacing:"-0.5px", color:"#111", marginBottom:"8px", lineHeight:1.1, textWrap:"balance" }}>{item.title}</h1>
             <div style={{ fontSize:"14px", color:"#6B7280", marginBottom:"20px", display:"flex", gap:"8px", alignItems:"center", flexWrap:"wrap" }}>
               {item.metro ? <>{t("Pickup near")} <MetroTag station={item.metro} city={item.city} /> {t("metro, {city}", { city:t(item.city) })}</> : <>📍 {t("Pickup in {city}", { city:t(item.city) })}</>}
             </div>
+
+            {/* Owner's video */}
+            {item.video && (
+              <div style={{ marginBottom:"24px" }}>
+                <div style={{ fontSize:"12px", fontWeight:600, color:"#374151", textTransform:"uppercase", letterSpacing:"0.5px", marginBottom:"8px" }}>▶ {t("Owner's video: see it working")}</div>
+                <video src={item.video} controls playsInline style={{ width:"100%", borderRadius:"18px", background:"#000", aspectRatio:"16/9" }} />
+              </div>
+            )}
 
             {/* Rent vs buy */}
             {item.retail && (
               <div className="card" style={{ padding:"20px", marginBottom:"24px", display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))", gap:"16px", alignItems:"center" }}>
                 <div>
                   <div style={{ fontSize:"11px", fontWeight:600, color:"#9CA3AF", textTransform:"uppercase", letterSpacing:"1px", marginBottom:"4px" }}>{t("Buying new")}</div>
-                  <div style={{ fontFamily:"'Fraunces',serif", fontSize:"26px", fontWeight:700, color:"#9CA3AF", textDecoration:"line-through", fontVariantNumeric:"tabular-nums" }}>₼{item.retail.toLocaleString("en")}</div>
+                  <div style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"26px", fontWeight:700, color:"#9CA3AF", textDecoration:"line-through", fontVariantNumeric:"tabular-nums" }}>₼{item.retail.toLocaleString("en")}</div>
                 </div>
                 <div>
                   <div style={{ fontSize:"11px", fontWeight:600, color:"#16A34A", textTransform:"uppercase", letterSpacing:"1px", marginBottom:"4px" }}>{t("Renting for a week")}</div>
-                  <div style={{ fontFamily:"'Fraunces',serif", fontSize:"26px", fontWeight:700, color:"#111", fontVariantNumeric:"tabular-nums" }}>₼{rentWeek}</div>
+                  <div style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"26px", fontWeight:700, color:"#111", fontVariantNumeric:"tabular-nums" }}>₼{rentWeek}</div>
                 </div>
                 <div style={{ background:"#F0FDF4", borderRadius:"12px", padding:"12px 14px", fontSize:"13px", color:"#166534", lineHeight:1.5 }}>
                   {t("You save")} <strong>₼{(item.retail - rentWeek).toLocaleString("en")}</strong>. {t("That's {p}% less than buying.", { p:Math.round((1 - rentWeek/item.retail)*100) })}
@@ -975,8 +1129,28 @@ export default function App() {
               </div>
             )}
 
+            {/* Kit contents */}
+            {item.isKit && (
+              <div style={{ marginBottom:"28px" }}>
+                <h3 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"22px", fontWeight:600, color:"#111", marginBottom:"12px" }}>{t("In this kit")}</h3>
+                <div className="card" style={{ padding:"6px 16px" }}>
+                  {item.kitItems.map((k,i)=>(
+                    <button key={k.id} type="button" onClick={()=>openListing(k)} style={{ display:"flex", alignItems:"center", gap:"12px", width:"100%", padding:"10px 0", background:"none", border:"none", borderBottom: i<item.kitItems.length-1?"1px solid #F3F2EF":"none", cursor:"pointer", textAlign:"left", fontFamily:"inherit" }}>
+                      <div style={{ width:"56px", flexShrink:0 }}><ItemPhoto item={k} height="44px" radius="10px" emojiSize={22} /></div>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ fontWeight:600, fontSize:"14px", color:"#111" }}>{k.title}</div>
+                        <div style={{ fontSize:"12px", color:"#6B7280", display:"flex", gap:"6px", alignItems:"center", flexWrap:"wrap" }}><MetroTag station={k.metro} city={k.city} /> · {k.owner}</div>
+                      </div>
+                      <div style={{ fontSize:"13px", fontWeight:600, color:"#111" }}>₼{k.price}<span style={{ color:"#9CA3AF", fontWeight:400 }}>{t("/day")}</span></div>
+                    </button>
+                  ))}
+                </div>
+                <div style={{ fontSize:"12px", color:"#6B7280", marginTop:"8px" }}>{t("Each owner confirms their item. Pick up each one near its metro, or choose delivery.")}</div>
+              </div>
+            )}
+
             {/* Owner */}
-            <div className="card" style={{ padding:"16px 20px", marginBottom:"28px", display:"flex", alignItems:"center", gap:"14px" }}>
+            {!item.isKit && <div className="card" style={{ padding:"16px 20px", marginBottom:"28px", display:"flex", alignItems:"center", gap:"14px" }}>
               <Avatar name={item.owner} size={48} bg="#16A34A" />
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ fontWeight:600, fontSize:"15px", color:"#111" }}>{item.owner}</div>
@@ -986,14 +1160,14 @@ export default function App() {
                 <Stars r={item.ownerRating} />
                 <div style={{ fontSize:"12px", color:"#6B7280" }}>{t("{r} rating", { r:item.ownerRating })}</div>
               </div>
-            </div>
+            </div>}
 
-            <h3 style={{ fontFamily:"'Fraunces',serif", fontSize:"22px", fontWeight:600, color:"#111", marginBottom:"12px" }}>{t("About this item")}</h3>
+            <h3 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"22px", fontWeight:600, color:"#111", marginBottom:"12px" }}>{t(item.isKit ? "About this kit" : "About this item")}</h3>
             <p style={{ fontSize:"15px", color:"#374151", lineHeight:1.8, marginBottom:"28px", maxWidth:"65ch" }}>{item.desc}</p>
 
             {/* Rules */}
             {item.rules?.length > 0 && <>
-              <h3 style={{ fontFamily:"'Fraunces',serif", fontSize:"22px", fontWeight:600, color:"#111", marginBottom:"12px" }}>{t("Rental rules")}</h3>
+              <h3 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"22px", fontWeight:600, color:"#111", marginBottom:"12px" }}>{t("Rental rules")}</h3>
               <div className="card" style={{ padding:"20px", marginBottom:"28px" }}>
                 {item.rules.map((r,i)=>(
                   <div key={i} style={{ display:"flex", gap:"10px", alignItems:"center", marginBottom: i<item.rules.length-1?"10px":0, fontSize:"14px", color:"#374151" }}>
@@ -1014,7 +1188,7 @@ export default function App() {
             )}
 
             {similar.length > 0 && <>
-              <h3 style={{ fontFamily:"'Fraunces',serif", fontSize:"22px", fontWeight:600, color:"#111", marginBottom:"12px" }}>{t("Similar items")}</h3>
+              <h3 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"22px", fontWeight:600, color:"#111", marginBottom:"12px" }}>{t(item.isKit ? "More kits" : "Similar items")}</h3>
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))", gap:"14px" }}>
                 {similar.map(renderCard)}
               </div>
@@ -1025,8 +1199,9 @@ export default function App() {
           <div style={{ position:"sticky", top:"90px" }}>
             <div className="card" style={{ padding:"24px", boxShadow:"0 8px 32px rgba(0,0,0,0.08)" }}>
               <div style={{ display:"flex", alignItems:"baseline", gap:"4px", marginBottom:"4px" }}>
-                <span style={{ fontFamily:"'Fraunces',serif", fontSize:"40px", fontWeight:700, color:"#111" }}>₼{item.price}</span>
+                <span style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"40px", fontWeight:700, color:"#111" }}>₼{item.price}</span>
                 <span style={{ fontSize:"14px", color:"#9CA3AF" }}>{t("/ day")}</span>
+                {item.isKit && <span style={{ fontSize:"13px", color:"#9CA3AF", textDecoration:"line-through", marginLeft:"6px" }}>₼{item.fullPrice}</span>}
               </div>
               <div style={{ display:"flex", alignItems:"center", gap:"4px", marginBottom:"18px" }}>
                 <Stars r={item.rating} />
@@ -1043,9 +1218,9 @@ export default function App() {
               {range.start && !range.end && <div style={{ fontSize:"12px", color:"#6B7280", marginTop:"8px" }}>{t("Tap an end date, or book just this one day.")}</div>}
 
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"8px", margin:"14px 0" }}>
-                {[[false,t("Pick up"), item.metro ? t("{m} metro", { m:item.metro }) : t(item.city)],[true,t("Delivery"), t("+₼{n} to your door", { n:DELIVERY_FEE })]].map(([v,l,sub])=>(
+                {[[false,t("Pick up"), item.metro ? t("{m} metro", { m:t(item.metro) }) : t(item.city)],[true,t("Delivery"), t("+₼{n} to your door", { n:DELIVERY_FEE })]].map(([v,l,sub])=>(
                   <button key={l} type="button" onClick={()=>setDelivery(v)} aria-pressed={delivery===v}
-                    style={{ textAlign:"left", padding:"10px 12px", borderRadius:"12px", border:`1.5px solid ${delivery===v?"#16A34A":"#E5E7EB"}`, background: delivery===v?"#F0FDF4":"#fff", cursor:"pointer", fontFamily:"'DM Sans',sans-serif" }}>
+                    style={{ textAlign:"left", padding:"10px 12px", borderRadius:"12px", border:`1.5px solid ${delivery===v?"#16A34A":"#E5E7EB"}`, background: delivery===v?"#F0FDF4":"#fff", cursor:"pointer", fontFamily:"'DM Sans','Inter',sans-serif" }}>
                     <div style={{ fontSize:"13px", fontWeight:600, color:"#111" }}>{l}</div>
                     <div style={{ fontSize:"11px", color:"#6B7280" }}>{sub}</div>
                   </button>
@@ -1093,6 +1268,82 @@ export default function App() {
     );
   }
 
+  // ── ASK BAKU ──────────────────────────────────────────────────────────────
+  const postRequest = () => {
+    if (!askForm.what.trim()) { showNotif(t("Write what you need first"), "error"); return; }
+    const who = user ? user.name.split(" ")[0] : t("You");
+    setRequests(rs => [{ id:Date.now(), who, what:askForm.what.trim(), when:askForm.when, metro:askForm.metro, budget:parseInt(askForm.budget) || 0, answers:0, mine:true }, ...rs]);
+    setAskForm(f => ({ ...f, what:"", budget:"" }));
+    showNotif(t("Request posted! Owners nearby will see it."));
+  };
+
+  if (screen === "ask") return (
+    <div style={{ minHeight:"100vh", background:BG }}><style>{css}</style>
+      <Header minimal />
+      {showAuth && <AuthModal />}
+      <Notif />
+      <div style={{ maxWidth:"720px", margin:"0 auto", padding:"96px 16px 60px" }}>
+        <div style={{ fontSize:"12px", fontWeight:600, color:"#16A34A", letterSpacing:"2px", textTransform:"uppercase", marginBottom:"10px" }}>💬 {t("Ask Baku")}</div>
+        <h1 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"clamp(30px,5vw,44px)", fontWeight:700, letterSpacing:"-0.5px", color:"#111", lineHeight:1.1, textWrap:"balance", marginBottom:"10px" }}>{t("Can't find it? Ask the neighbourhood.")}</h1>
+        <p style={{ fontSize:"15px", color:"#6B7280", lineHeight:1.7, marginBottom:"24px" }}>{t("Post what you need, when, and near which metro. Owners nearby who have it will answer.")}</p>
+
+        <div className="card" style={{ padding:"20px", display:"grid", gap:"12px", marginBottom:"32px" }}>
+          <label htmlFor="ask-what" style={{ fontSize:"13px", fontWeight:600, color:"#374151" }}>{t("What do you need?")}</label>
+          <input id="ask-what" className="inp" placeholder={t("e.g. Projector for a birthday party")} value={askForm.what} onChange={e=>setAskForm(f=>({...f,what:e.target.value}))} onKeyDown={e=>e.key==="Enter"&&postRequest()} />
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:"10px" }}>
+            <div>
+              <label htmlFor="ask-when" style={{ fontSize:"12px", fontWeight:600, color:"#6B7280", display:"block", marginBottom:"6px" }}>{t("When?")}</label>
+              <select id="ask-when" className="inp" value={askForm.when} onChange={e=>setAskForm(f=>({...f,when:e.target.value}))}>
+                {WHEN.map(w=><option key={w} value={w}>{t(w)}</option>)}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="ask-metro" style={{ fontSize:"12px", fontWeight:600, color:"#6B7280", display:"block", marginBottom:"6px" }}>{t("Metro station")}</label>
+              <select id="ask-metro" className="inp" value={askForm.metro} onChange={e=>setAskForm(f=>({...f,metro:e.target.value}))}>
+                {METRO.map(m=><option key={m} value={m}>{t(m)}</option>)}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="ask-budget" style={{ fontSize:"12px", fontWeight:600, color:"#6B7280", display:"block", marginBottom:"6px" }}>{t("Max ₼ per day")}</label>
+              <input id="ask-budget" className="inp" type="number" min="0" placeholder="20" value={askForm.budget} onChange={e=>setAskForm(f=>({...f,budget:e.target.value}))} />
+            </div>
+          </div>
+          <button className="btn btn-green btn-lg btn-full" onClick={postRequest}>{t("Post request")}</button>
+        </div>
+
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:"12px" }}>
+          <h2 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"24px", fontWeight:700, color:"#111" }}>{t("Open requests")}</h2>
+          <span style={{ fontSize:"12px", color:"#9CA3AF" }}>{t("example requests")}</span>
+        </div>
+        <div style={{ display:"flex", flexDirection:"column", gap:"10px" }}>
+          {requests.map(r=>{
+            const did = offered.includes(r.id);
+            return (
+              <div key={r.id} className="card" style={{ padding:"16px 18px", display:"flex", gap:"14px", alignItems:"center", flexWrap:"wrap", animation:"fadeUp 0.3s ease both" }}>
+                <Avatar name={r.who} size={40} bg={r.mine ? "#16A34A" : "#111"} />
+                <div style={{ flex:"1 1 200px", minWidth:0 }}>
+                  <div style={{ fontWeight:600, fontSize:"15px", color:"#111" }}>{t(r.what)}</div>
+                  <div style={{ fontSize:"12px", color:"#6B7280", marginTop:"4px", display:"flex", gap:"6px", alignItems:"center", flexWrap:"wrap" }}>
+                    <span>{r.who}</span> · <MetroTag station={r.metro} city="Baku" /> · <span>{t(r.when)}</span>{r.budget ? <> · <span>{t("up to ₼{n}/day", { n:r.budget })}</span></> : null}
+                  </div>
+                  <div style={{ fontSize:"12px", color: r.answers ? "#16A34A" : "#9CA3AF", marginTop:"4px", fontWeight:600 }}>
+                    {r.answers ? t("{n} owners answered", { n:r.answers + (did?1:0) }) : did ? t("{n} owners answered", { n:1 }) : t("No answers yet")}
+                  </div>
+                </div>
+                {r.mine
+                  ? <Badge label={t("Your request")} />
+                  : <button className={`btn ${did ? "btn-outline" : "btn-dark"}`} disabled={did}
+                      onClick={()=>{ if (!user) { setAuthMode("signup"); setShowAuth(true); return; } setOffered(o=>[...o, r.id]); showNotif(t("We told {who} you can help 👍", { who:r.who })); }}>
+                      {did ? t("✓ You offered") : t("I have this")}
+                    </button>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
   // ── VERIFY IDENTITY ───────────────────────────────────────────────────────
   if (screen === "verify") return (
     <div style={{ minHeight:"100vh", background:BG }}><style>{css}</style>
@@ -1101,7 +1352,7 @@ export default function App() {
       <div style={{ maxWidth:"560px", margin:"0 auto", padding:"100px 24px 60px" }}>
         <div style={{ textAlign:"center", marginBottom:"40px" }}>
           <div style={{ width:"64px", height:"64px", borderRadius:"20px", background:"#F0FDF4", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 16px", fontSize:"28px" }}>🛡</div>
-          <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"8px" }}>{t("Verify your identity")}</h2>
+          <h2 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"8px" }}>{t("Verify your identity")}</h2>
           <p style={{ fontSize:"15px", color:"#6B7280", lineHeight:1.7 }}>{t("One-time check. Keeps everyone safe.")}</p>
         </div>
 
@@ -1119,7 +1370,7 @@ export default function App() {
           <div style={{ animation:"fadeUp 0.4s ease" }}>
             <div className="verify-box" onClick={()=>setVerifyStep(1)}>
               <div style={{ fontSize:"48px", marginBottom:"16px" }}>🪪</div>
-              <div style={{ fontFamily:"'Fraunces',serif", fontSize:"20px", fontWeight:600, color:"#111", marginBottom:"8px" }}>{t("Upload your ID")}</div>
+              <div style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"20px", fontWeight:600, color:"#111", marginBottom:"8px" }}>{t("Upload your ID")}</div>
               <div style={{ fontSize:"13px", color:"#6B7280", lineHeight:1.7 }}>{t("Passport, national ID, or driving license. Your data is encrypted and never shared.")}</div>
               <div className="btn btn-dark" style={{ marginTop:"20px", display:"inline-flex" }}>{t("Choose file →")}</div>
             </div>
@@ -1134,7 +1385,7 @@ export default function App() {
             </div>
             <div className="verify-box" onClick={()=>setVerifyStep(2)}>
               <div style={{ fontSize:"48px", marginBottom:"16px" }}>🤳</div>
-              <div style={{ fontFamily:"'Fraunces',serif", fontSize:"20px", fontWeight:600, color:"#111", marginBottom:"8px" }}>{t("Take a selfie")}</div>
+              <div style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"20px", fontWeight:600, color:"#111", marginBottom:"8px" }}>{t("Take a selfie")}</div>
               <div style={{ fontSize:"13px", color:"#6B7280" }}>{t("We'll match it to your ID automatically. Takes 10 seconds.")}</div>
               <div className="btn btn-dark" style={{ marginTop:"20px", display:"inline-flex" }}>{t("Open camera →")}</div>
             </div>
@@ -1144,7 +1395,7 @@ export default function App() {
         {verifyStep === 2 && (
           <div style={{ animation:"fadeUp 0.4s ease", textAlign:"center" }}>
             <div style={{ width:"80px", height:"80px", border:"4px solid #F0EFEC", borderTop:"4px solid #16A34A", borderRadius:"50%", margin:"0 auto 24px", animation:"spin 1s linear infinite" }} />
-            <div style={{ fontFamily:"'Fraunces',serif", fontSize:"24px", fontWeight:600, color:"#111", marginBottom:"8px" }}>{t("Verifying...")}</div>
+            <div style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"24px", fontWeight:600, color:"#111", marginBottom:"8px" }}>{t("Verifying...")}</div>
             <div style={{ fontSize:"14px", color:"#6B7280", marginBottom:"32px" }}>{t("Checking your documents")}</div>
             <button className="btn btn-green btn-lg btn-full" onClick={handleVerifyDone}>
               {t("Verification complete ✓")}
@@ -1160,7 +1411,7 @@ export default function App() {
 
   // ── BOOKED ────────────────────────────────────────────────────────────────
   if (screen === "booked" && booking) {
-    const b = { ...booking, item:localize(booking.item) };
+    const b = { ...booking, item:booking.item.isKit ? findItem(booking.item.id) : localize(booking.item) };
     const shots = pickupPhotos.filter(Boolean).length;
     return (
     <div style={{ minHeight:"100vh", background:BG }}><style>{css}</style>
@@ -1169,7 +1420,7 @@ export default function App() {
       <div style={{ maxWidth:"560px", margin:"0 auto", padding:"96px 16px 60px" }}>
         <div style={{ textAlign:"center" }}>
           <div style={{ width:"80px", height:"80px", borderRadius:"50%", background:"#DCFCE7", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 20px", fontSize:"36px", color:"#16A34A", animation:"pop 0.5s cubic-bezier(0.34,1.56,0.64,1)" }}>✓</div>
-          <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"clamp(30px,6vw,40px)", fontWeight:700, color:"#111", marginBottom:"10px" }}>{t("Booking confirmed!")}</h2>
+          <h2 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"clamp(30px,6vw,40px)", fontWeight:700, color:"#111", marginBottom:"10px" }}>{t("Booking confirmed!")}</h2>
           <p style={{ fontSize:"16px", color:"#6B7280" }}>
             <strong style={{ color:"#111" }}>{b.item.owner}</strong> {t("will confirm within 2 hours and message you {x}.", { x:t(b.delivery ? "a delivery time" : "the exact pickup spot") })}
           </p>
@@ -1181,7 +1432,7 @@ export default function App() {
             {[
               [t("Item"), b.item.title],
               [t("Dates"), `${fmtRange(b.start, b.end)} · ${daysLabel(b.days)}`],
-              [t("Handover"), b.delivery ? t("Delivered to your door") : b.item.metro ? t("Pickup near {m} metro", { m:b.item.metro }) : t("Pickup in {city}", { city:t(b.item.city) })],
+              [t("Handover"), b.delivery ? t("Delivered to your door") : b.item.metro ? t("Pickup near {m} metro", { m:t(b.item.metro) }) : t("Pickup in {city}", { city:t(b.item.city) })],
               ...(b.discount ? [[t("Discount"), `−₼${b.discount}`]] : []),
               [t("Total paid"), `₼${b.total}`],
               [t("Deposit held"), b.item.deposit ? t("₼{n}, returned after a safe return", { n:b.item.deposit }) : t("None")],
@@ -1212,6 +1463,12 @@ export default function App() {
               </label>
             ))}
           </div>
+          <label className="slot" style={{ aspectRatio:"auto", minHeight:"64px", marginTop:"8px", flexDirection:"row", gap:"10px", ...(pickupVideo?{ borderStyle:"solid", borderColor:"#16A34A", padding:0 }:{}) }}>
+            {pickupVideo
+              ? <video src={pickupVideo} muted playsInline controls style={{ width:"100%", maxHeight:"220px", background:"#000" }} />
+              : <><span style={{ fontSize:"20px" }}>🎥</span><span><strong style={{ color:"#111" }}>{t("Add a short video (optional)")}</strong><br/>{t("Turn it on and show it works, like a phone or speaker playing.")}</span></>}
+            {!pickupVideo && <input type="file" accept="video/*" capture="environment" aria-label={t("Add a short video (optional)")} onChange={e=>{ const f=e.target.files?.[0]; if (f && f.type.startsWith("video/")) setPickupVideo(URL.createObjectURL(f)); }} />}
+          </label>
           {shots===3 && <div style={{ marginTop:"12px", background:"#F0FDF4", borderRadius:"10px", padding:"10px 12px", fontSize:"12px", color:"#166534" }}>{t("✓ Condition recorded and shared with {o}.", { o:b.item.owner })}</div>}
         </div>
 
@@ -1236,7 +1493,7 @@ export default function App() {
             <span style={{ fontSize:"20px" }}>⚠️</span>
             <div style={{ fontSize:"14px", color:"#92400E" }}>
               <strong>{t("Sign up first")}</strong> {t("to list an item. It only takes a minute.")}
-              <button onClick={()=>{ setAuthMode("signup"); setShowAuth(true); }} style={{ background:"none", border:"none", color:"#D97706", fontWeight:700, cursor:"pointer", marginLeft:"8px", fontFamily:"'DM Sans',sans-serif", fontSize:"14px" }}>{t("Sign up →")}</button>
+              <button onClick={()=>{ setAuthMode("signup"); setShowAuth(true); }} style={{ background:"none", border:"none", color:"#D97706", fontWeight:700, cursor:"pointer", marginLeft:"8px", fontFamily:"'DM Sans','Inter',sans-serif", fontSize:"14px" }}>{t("Sign up →")}</button>
             </div>
           </div>
         )}
@@ -1254,7 +1511,7 @@ export default function App() {
 
             {listStep === 0 && (
               <div style={{ animation:"fadeUp 0.4s ease" }}>
-                <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"6px" }}>{t("What are you listing?")}</h2>
+                <h2 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"6px" }}>{t("What are you listing?")}</h2>
                 <p style={{ fontSize:"15px", color:"#6B7280", marginBottom:"28px" }}>{t("Give it a name that makes it easy to find.")}</p>
                 <div style={{ display:"flex", flexDirection:"column", gap:"14px" }}>
                   <div>
@@ -1277,7 +1534,7 @@ export default function App() {
                     <div>
                       <label htmlFor="l-metro" style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>{t("Nearest metro station for pickup")}</label>
                       <select id="l-metro" className="inp" value={listForm.metro} onChange={e=>setListForm(f=>({...f,metro:e.target.value}))}>
-                        {METRO.map(m=><option key={m}>{m}</option>)}
+                        {METRO.map(m=><option key={m} value={m}>{t(m)}</option>)}
                       </select>
                       <div style={{ fontSize:"12px", color:"#9CA3AF", marginTop:"6px" }}>{t("Renters filter by metro. Listings with a station get more bookings.")}</div>
                     </div>
@@ -1292,13 +1549,25 @@ export default function App() {
                     </label>
                     {listForm.photo && <button className="btn btn-ghost" style={{ marginTop:"6px", fontSize:"12px", padding:"6px 10px" }} onClick={()=>setListForm(f=>({...f,photo:null}))}>{t("Remove photo")}</button>}
                   </div>
+                  <div>
+                    <div style={{ fontSize:"13px", fontWeight:600, color:"#374151", marginBottom:"8px" }}>{t("Video (optional)")}</div>
+                    {listForm.video
+                      ? <video src={listForm.video} controls playsInline muted style={{ width:"100%", borderRadius:"14px", background:"#000", aspectRatio:"16/9" }} />
+                      : <label className="slot" style={{ aspectRatio:"16/5" }}>
+                          <span style={{ fontSize:"24px" }}>🎥</span>
+                          <strong style={{ color:"#111" }}>{t("Show it working")}</strong>
+                          <span>{t("A 10-second video of the drone flying or the speaker playing builds trust.")}</span>
+                          <input type="file" accept="video/*" aria-label={t("Show it working")} onChange={e=>{ const f=e.target.files?.[0]; if (f && f.type.startsWith("video/")) setListForm(x=>({...x, video:URL.createObjectURL(f)})); }} />
+                        </label>}
+                    {listForm.video && <button className="btn btn-ghost" style={{ marginTop:"6px", fontSize:"12px", padding:"6px 10px" }} onClick={()=>setListForm(f=>({...f,video:null}))}>{t("Remove video")}</button>}
+                  </div>
                 </div>
               </div>
             )}
 
             {listStep === 1 && (
               <div style={{ animation:"fadeUp 0.4s ease" }}>
-                <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"6px" }}>{t("Describe your item")}</h2>
+                <h2 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"6px" }}>{t("Describe your item")}</h2>
                 <p style={{ fontSize:"15px", color:"#6B7280", marginBottom:"28px" }}>{t("A clear description helps renters choose your item.")}</p>
                 <div style={{ display:"flex", flexDirection:"column", gap:"14px" }}>
                   <div>
@@ -1315,14 +1584,14 @@ export default function App() {
 
             {listStep === 2 && (
               <div style={{ animation:"fadeUp 0.4s ease" }}>
-                <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"6px" }}>{t("Set your price")}</h2>
+                <h2 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"6px" }}>{t("Set your price")}</h2>
                 <p style={{ fontSize:"15px", color:"#6B7280", marginBottom:"28px" }}>{t("You keep 90%. We take 10% to cover insurance and platform costs.")}</p>
                 <div style={{ display:"flex", flexDirection:"column", gap:"14px" }}>
                   <div>
                     <label htmlFor="l-retail" style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>{t("What would it cost to buy new? (₼)")}</label>
                     <div style={{ position:"relative" }}>
-                      <div style={{ position:"absolute", left:"16px", top:"50%", transform:"translateY(-50%)", fontFamily:"'Fraunces',serif", fontSize:"20px", color:"#6B7280", pointerEvents:"none" }}>₼</div>
-                      <input id="l-retail" className="inp" style={{ paddingLeft:"34px", fontSize:"20px", fontFamily:"'Fraunces',serif" }} placeholder="0" type="number" min="0" value={listForm.retail} onChange={e=>setListForm(f=>({...f,retail:e.target.value}))} />
+                      <div style={{ position:"absolute", left:"16px", top:"50%", transform:"translateY(-50%)", fontFamily:"'Fraunces','Lora',serif", fontSize:"20px", color:"#6B7280", pointerEvents:"none" }}>₼</div>
+                      <input id="l-retail" className="inp" style={{ paddingLeft:"34px", fontSize:"20px", fontFamily:"'Fraunces','Lora',serif" }} placeholder="0" type="number" min="0" value={listForm.retail} onChange={e=>setListForm(f=>({...f,retail:e.target.value}))} />
                     </div>
                     {parseInt(listForm.retail) > 0 && (() => {
                       const sug = Math.max(3, Math.round(parseInt(listForm.retail) * 0.03));
@@ -1341,15 +1610,15 @@ export default function App() {
                   <div>
                     <label style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>{t("Daily price (₼) *")}</label>
                     <div style={{ position:"relative" }}>
-                      <div style={{ position:"absolute", left:"16px", top:"50%", transform:"translateY(-50%)", fontFamily:"'Fraunces',serif", fontSize:"20px", color:"#6B7280", pointerEvents:"none" }}>₼</div>
-                      <input className="inp" style={{ paddingLeft:"34px", fontSize:"20px", fontFamily:"'Fraunces',serif" }} placeholder="0" type="number" value={listForm.price} onChange={e=>setListForm(f=>({...f,price:e.target.value}))} />
+                      <div style={{ position:"absolute", left:"16px", top:"50%", transform:"translateY(-50%)", fontFamily:"'Fraunces','Lora',serif", fontSize:"20px", color:"#6B7280", pointerEvents:"none" }}>₼</div>
+                      <input className="inp" style={{ paddingLeft:"34px", fontSize:"20px", fontFamily:"'Fraunces','Lora',serif" }} placeholder="0" type="number" value={listForm.price} onChange={e=>setListForm(f=>({...f,price:e.target.value}))} />
                     </div>
                   </div>
                   <div>
                     <label style={{ fontSize:"13px", fontWeight:600, color:"#374151", display:"block", marginBottom:"8px" }}>{t("Security deposit (₼) — optional")}</label>
                     <div style={{ position:"relative" }}>
-                      <div style={{ position:"absolute", left:"16px", top:"50%", transform:"translateY(-50%)", fontFamily:"'Fraunces',serif", fontSize:"20px", color:"#6B7280", pointerEvents:"none" }}>₼</div>
-                      <input className="inp" style={{ paddingLeft:"34px", fontSize:"20px", fontFamily:"'Fraunces',serif" }} placeholder="0" type="number" value={listForm.deposit} onChange={e=>setListForm(f=>({...f,deposit:e.target.value}))} />
+                      <div style={{ position:"absolute", left:"16px", top:"50%", transform:"translateY(-50%)", fontFamily:"'Fraunces','Lora',serif", fontSize:"20px", color:"#6B7280", pointerEvents:"none" }}>₼</div>
+                      <input className="inp" style={{ paddingLeft:"34px", fontSize:"20px", fontFamily:"'Fraunces','Lora',serif" }} placeholder="0" type="number" value={listForm.deposit} onChange={e=>setListForm(f=>({...f,deposit:e.target.value}))} />
                     </div>
                     <div style={{ fontSize:"12px", color:"#9CA3AF", marginTop:"6px" }}>{t("Held during the rental and returned when the item comes back safely.")}</div>
                   </div>
@@ -1374,7 +1643,7 @@ export default function App() {
 
             {listStep === 3 && (
               <div style={{ animation:"fadeUp 0.4s ease" }}>
-                <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"6px" }}>{t("Review your listing")}</h2>
+                <h2 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"6px" }}>{t("Review your listing")}</h2>
                 <p style={{ fontSize:"15px", color:"#6B7280", marginBottom:"28px" }}>{t("Looks good? Hit publish.")}</p>
                 <div className="card" style={{ padding:"24px", marginBottom:"20px" }}>
                   <div style={{ marginBottom:"16px" }}>
@@ -1383,7 +1652,7 @@ export default function App() {
                   {[
                     [t("Title"), listForm.title || "—"],
                     [t("Category"), t(CATS.find(c=>c.id===listForm.cat)?.label || "")],
-                    [t("Pickup"), listForm.city === "Baku" ? t("{m} metro, Baku", { m:listForm.metro }) : t(listForm.city)],
+                    [t("Pickup"), listForm.city === "Baku" ? t("{m} metro, Baku", { m:t(listForm.metro) }) : t(listForm.city)],
                     [t("Daily price"), listForm.price ? `₼${listForm.price}` : "—"],
                     [t("Deposit"), listForm.deposit ? `₼${listForm.deposit}` : t("None")],
                   ].map(([l,v])=>(
@@ -1414,7 +1683,7 @@ export default function App() {
         ) : (
           <div style={{ textAlign:"center", animation:"fadeUp 0.5s ease" }}>
             <div style={{ width:"80px", height:"80px", borderRadius:"50%", background:"#DCFCE7", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 20px", fontSize:"36px", animation:"pop 0.5s cubic-bezier(0.34,1.56,0.64,1)" }}>🎉</div>
-            <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"36px", fontWeight:700, color:"#111", marginBottom:"8px" }}>{t("You're live!")}</h2>
+            <h2 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"36px", fontWeight:700, color:"#111", marginBottom:"8px" }}>{t("You're live!")}</h2>
             <p style={{ fontSize:"16px", color:"#6B7280", marginBottom:"6px" }}><strong style={{ color:"#111" }}>{listForm.title}</strong> {t("is now visible to renters.")}</p>
             <p style={{ fontSize:"14px", color:"#9CA3AF", marginBottom:"32px" }}>{t("You'll get notified when someone books.")}</p>
             <div style={{ display:"flex", flexDirection:"column", gap:"10px" }}>
@@ -1442,7 +1711,7 @@ export default function App() {
               <div style={{ fontWeight:600, fontSize:"15px", color:"#111" }}>{user.name}</div>
               <div style={{ fontSize:"12px", color:"#9CA3AF" }}>{t("Member since {y}", { y:user.joined })}</div>
               {!user.verified && (
-                <button onClick={()=>setScreen("verify")} style={{ background:"none", border:"none", color:"#F59E0B", fontSize:"11px", fontWeight:600, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", padding:0, marginTop:"2px" }}>
+                <button onClick={()=>setScreen("verify")} style={{ background:"none", border:"none", color:"#F59E0B", fontSize:"11px", fontWeight:600, cursor:"pointer", fontFamily:"'DM Sans','Inter',sans-serif", padding:0, marginTop:"2px" }}>
                   {t("⚠️ Verify ID")}
                 </button>
               )}
@@ -1461,7 +1730,7 @@ export default function App() {
             </button>
           ))}
           <div style={{ marginTop:"16px", paddingTop:"16px", borderTop:"1px solid #F0EFEC" }}>
-            <button className="dash-nav-btn" onClick={()=>{ setUser(null); setScreen("home"); showNotif("Logged out"); }}>
+            <button className="dash-nav-btn" onClick={()=>{ setUser(null); setScreen("home"); showNotif(t("Logged out")); }}>
               <span>←</span> {t("Log out")}
             </button>
           </div>
@@ -1471,7 +1740,7 @@ export default function App() {
         <div>
           {dashTab === "overview" && (
             <div style={{ animation:"fadeUp 0.3s ease" }}>
-              <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"28px", fontWeight:700, color:"#111", marginBottom:"24px" }}>
+              <h2 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"28px", fontWeight:700, color:"#111", marginBottom:"24px" }}>
                 {t("Good morning, {n} 👋", { n:user.name.split(" ")[0] })}
               </h2>
 
@@ -1493,13 +1762,13 @@ export default function App() {
                 ].map(s=>(
                   <div key={s.label} className="card" style={{ padding:"20px", background:s.color, border:"none" }}>
                     <div style={{ fontSize:"24px", marginBottom:"8px" }}>{s.icon}</div>
-                    <div style={{ fontFamily:"'Fraunces',serif", fontSize:"28px", fontWeight:700, color:"#111", marginBottom:"4px" }}>{s.value}</div>
+                    <div style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"28px", fontWeight:700, color:"#111", marginBottom:"4px" }}>{s.value}</div>
                     <div style={{ fontSize:"12px", color:"#6B7280" }}>{s.label}</div>
                   </div>
                 ))}
               </div>
 
-              <h3 style={{ fontFamily:"'Fraunces',serif", fontSize:"20px", fontWeight:600, color:"#111", marginBottom:"16px" }}>{t("Recent activity")}</h3>
+              <h3 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"20px", fontWeight:600, color:"#111", marginBottom:"16px" }}>{t("Recent activity")}</h3>
               <div className="card" style={{ padding:"20px" }}>
                 {OWNER_BOOKINGS().slice(0,3).map((b,i)=>(
                   <div key={b.id} style={{ display:"flex", alignItems:"center", gap:"14px", padding:"12px 0", borderBottom: i<2?"1px solid #F8F7F4":"none" }}>
@@ -1520,13 +1789,13 @@ export default function App() {
 
           {dashTab === "bookings" && (
             <div style={{ animation:"fadeUp 0.3s ease" }}>
-              <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"28px", fontWeight:700, color:"#111", marginBottom:"24px" }}>{t("My Bookings")}</h2>
+              <h2 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"28px", fontWeight:700, color:"#111", marginBottom:"24px" }}>{t("My Bookings")}</h2>
               <div style={{ display:"flex", flexDirection:"column", gap:"12px" }}>
                 {booking ? (
                   <div className="card" style={{ padding:"16px 20px", display:"flex", alignItems:"center", gap:"16px" }}>
                     <div style={{ width:"64px", flexShrink:0 }}><ItemPhoto item={booking.item} height="56px" radius="12px" emojiSize={26} /></div>
                     <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ fontWeight:600, fontSize:"15px", color:"#111", marginBottom:"3px" }}>{localize(booking.item).title}</div>
+                      <div style={{ fontWeight:600, fontSize:"15px", color:"#111", marginBottom:"3px" }}>{(booking.item.isKit ? findItem(booking.item.id) : localize(booking.item)).title}</div>
                       <div style={{ fontSize:"13px", color:"#9CA3AF" }}>{t("by {o}", { o:booking.item.owner })} · {fmtRange(booking.start, booking.end)} · {daysLabel(booking.days)}</div>
                     </div>
                     <div style={{ textAlign:"right" }}>
@@ -1537,7 +1806,7 @@ export default function App() {
                 ) : (
                   <div style={{ textAlign:"center", padding:"60px 20px" }}>
                     <div style={{ fontSize:"40px", marginBottom:"14px" }}>📅</div>
-                    <div style={{ fontFamily:"'Fraunces',serif", fontSize:"22px", color:"#111", marginBottom:"8px" }}>{t("No bookings yet")}</div>
+                    <div style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"22px", color:"#111", marginBottom:"8px" }}>{t("No bookings yet")}</div>
                     <div style={{ fontSize:"14px", color:"#9CA3AF", marginBottom:"20px" }}>{t("Find something to rent nearby.")}</div>
                     <button className="btn btn-green btn-lg" onClick={()=>setScreen("browse")}>{t("Browse items")}</button>
                   </div>
@@ -1549,7 +1818,7 @@ export default function App() {
           {dashTab === "listings" && (
             <div style={{ animation:"fadeUp 0.3s ease" }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:"24px" }}>
-                <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"28px", fontWeight:700, color:"#111" }}>{t("My Listings")}</h2>
+                <h2 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"28px", fontWeight:700, color:"#111" }}>{t("My Listings")}</h2>
                 <button className="btn btn-green" onClick={()=>setScreen("list")}>{t("+ Add item")}</button>
               </div>
               <div style={{ display:"flex", flexDirection:"column", gap:"12px" }}>
@@ -1575,11 +1844,11 @@ export default function App() {
 
           {dashTab === "earnings" && (
             <div style={{ animation:"fadeUp 0.3s ease" }}>
-              <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"28px", fontWeight:700, color:"#111", marginBottom:"24px" }}>{t("Earnings")}</h2>
+              <h2 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"28px", fontWeight:700, color:"#111", marginBottom:"24px" }}>{t("Earnings")}</h2>
               <div className="stack-mobile" style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:"14px", marginBottom:"28px" }}>
                 {[["₼117",t("This month")],["₼892",t("All time")],["₼35",t("Pending payout")]].map(([v,l])=>(
                   <div key={l} className="card" style={{ padding:"20px" }}>
-                    <div style={{ fontFamily:"'Fraunces',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"4px" }}>{v}</div>
+                    <div style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"32px", fontWeight:700, color:"#111", marginBottom:"4px" }}>{v}</div>
                     <div style={{ fontSize:"13px", color:"#6B7280" }}>{l}</div>
                   </div>
                 ))}
@@ -1611,7 +1880,7 @@ export default function App() {
 
           {dashTab === "settings" && (
             <div style={{ animation:"fadeUp 0.3s ease" }}>
-              <h2 style={{ fontFamily:"'Fraunces',serif", fontSize:"28px", fontWeight:700, color:"#111", marginBottom:"24px" }}>{t("Settings")}</h2>
+              <h2 style={{ fontFamily:"'Fraunces','Lora',serif", fontSize:"28px", fontWeight:700, color:"#111", marginBottom:"24px" }}>{t("Settings")}</h2>
               <div style={{ display:"flex", flexDirection:"column", gap:"16px" }}>
                 {[
                   { title:t("Profile information"), desc:t("Name, email, phone number"), icon:"👤" },
